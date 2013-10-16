@@ -15,6 +15,7 @@ include $(topsrcdir)/config/config.mk
 AB_rCD = $(if $(filter he, $(AB_CD)),iw,$(if $(filter id, $(AB_CD)),in,$(subst -,-r,$(AB_CD))))
 
 SYNCSTRINGSPATH = $(call core_abspath,$(call MERGE_FILE,sync_strings.dtd))
+ZXINGSTRINGSPATH = $(call core_abspath,$(call MERGE_FILE,zxing_strings.dtd))
 STRINGSPATH = $(call core_abspath,$(call MERGE_FILE,android_strings.dtd))
 ifeq (,$(XPI_NAME))
 BRANDPATH = $(call core_abspath,$(DEPTH)/dist/bin/chrome/$(AB_CD)/locale/branding/brand.dtd)
@@ -61,6 +62,7 @@ strings-xml-preqs =\
   $(BRANDPATH) \
   $(STRINGSPATH) \
   $(SYNCSTRINGSPATH) \
+  $(ZXINGSTRINGSPATH) \
   $(BOOKMARKSPATH) \
   $(if $(IS_LANGUAGE_REPACK),FORCE) \
   $(NULL)
@@ -72,6 +74,7 @@ $(dir-strings-xml)/strings.xml: $(strings-xml-preqs)
 	  -DBRANDPATH="$(BRANDPATH)" \
 	  -DSTRINGSPATH="$(STRINGSPATH)" \
 	  -DSYNCSTRINGSPATH="$(SYNCSTRINGSPATH)" \
+	  -DZXINGSTRINGSPATH="$(ZXINGSTRINGSPATH)" \
 	  -DBOOKMARKSPATH="$(BOOKMARKSPATH)" \
 	  -DMOZ_APP_DISPLAYNAME="@MOZ_APP_DISPLAYNAME@" \
       $< \

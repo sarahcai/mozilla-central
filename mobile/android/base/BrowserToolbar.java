@@ -182,7 +182,7 @@ public class BrowserToolbar extends GeckoRelativeLayout
         mUrlColor = new ForegroundColorSpan(res.getColor(R.color.url_bar_urltext));
         mDomainColor = new ForegroundColorSpan(res.getColor(R.color.url_bar_domaintext));
         mPrivateDomainColor = new ForegroundColorSpan(res.getColor(R.color.url_bar_domaintext_private));
-
+        
         registerEventListener("Reader:Click");
         registerEventListener("Reader:LongClick");
 
@@ -816,10 +816,12 @@ public class BrowserToolbar extends GeckoRelativeLayout
             inReaderMode = ReaderModeUtils.isAboutReader(tab.getURL());
 
         mPageActionLayout.setVisibility(!isLoading ? View.VISIBLE : View.GONE);
+
         // We want title to fill the whole space available for it when there are icons
         // being shown on the right side of the toolbar as the icons already have some
         // padding in them. This is just to avoid wasting space when icons are shown.
-        mTitle.setPadding(0, 0, (!isLoading && !(mShowReader || inReaderMode) ? mTitlePadding : 0), 0);
+       // mTitle.setPadding(0, 0, (!isLoading && !(mShowReader || inReaderMode) ? mTitlePadding : 0), 0);
+        mTitle.setPadding(0, 0, (!isLoading && inReaderMode ? mTitlePadding : 0), 0);
         updateFocusOrder();
     }
 

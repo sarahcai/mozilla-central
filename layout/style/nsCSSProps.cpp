@@ -922,6 +922,7 @@ int32_t nsCSSProps::kDisplayKTable[] = {
   // Make sure this is kept in sync with the code in
   // nsCSSFrameConstructor::ConstructXULFrame
   eCSSKeyword__moz_box,           NS_STYLE_DISPLAY_BOX,
+  eCSSKeyword__webkit_box,        NS_STYLE_DISPLAY_BOX,
   eCSSKeyword__moz_inline_box,    NS_STYLE_DISPLAY_INLINE_BOX,
 #ifdef MOZ_XUL
   eCSSKeyword__moz_grid,          NS_STYLE_DISPLAY_GRID,
@@ -938,6 +939,7 @@ int32_t nsCSSProps::kDisplayKTable[] = {
   // table, because the "is flexbox enabled" pref that disables these will
   // disable all the entries after them, too.
   eCSSKeyword_flex,               NS_STYLE_DISPLAY_FLEX,
+  eCSSKeyword__webkit_flex,       NS_STYLE_DISPLAY_FLEX,
   eCSSKeyword_inline_flex,        NS_STYLE_DISPLAY_INLINE_FLEX,
   eCSSKeyword_UNKNOWN,-1
 };

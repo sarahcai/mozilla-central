@@ -3078,7 +3078,24 @@ SearchService.prototype = {
 
         return;
       }
-
+      // Hack for tablet Taobao search.
+      try {
+          let sysInfo = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2);
+          if (sysInfo.get("tablet")) {
+            for (var i = 0; i < names.length; i++) {
+                if (names[i] == 'taobao') {
+                    names.splice(i, 1);
+                }
+            }
+          } else {
+            for (var i = 0; i < names.length; i++) {
+                if (names[i] == 'taobao-tablet') {
+                    names.splice(i, 1);
+                }
+            }
+          }
+      } catch (ex) {
+      }
       names.forEach(function (n) uris.push(root + n + ".xml"));
     });
     

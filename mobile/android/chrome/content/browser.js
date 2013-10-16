@@ -257,6 +257,9 @@ var BrowserApp = {
   get isOnLowMemoryPlatform() {
     let memory = Cc["@mozilla.org/xpcom/memory-service;1"].getService(Ci.nsIMemory);
     delete this.isOnLowMemoryPlatform;
+    if (!memory.isLowMemoryPlatform()) {
+    	sendMessageToJava({ type: "Platform:NotLowMemory" });
+    }
     return this.isOnLowMemoryPlatform = memory.isLowMemoryPlatform();
   },
 
@@ -1120,6 +1123,7 @@ var BrowserApp = {
         case "browser.chrome.titlebarMode":
         case "network.cookie.cookieBehavior":
         case "font.size.inflation.minTwips":
+        case "network.proxy.type":
           pref.type = "string";
           pref.value = pref.value.toString();
           break;
@@ -1210,6 +1214,7 @@ var BrowserApp = {
       // to their actual types so we can store them.
       case "browser.chrome.titlebarMode":
       case "network.cookie.cookieBehavior":
+      case "network.proxy.type":
       case "font.size.inflation.minTwips":
         json.type = "int";
         json.value = parseInt(json.value);
@@ -2589,6 +2594,7 @@ function Tab(aURL, aParams) {
   this._fixedMarginBottom = 0;
   this._readerEnabled = false;
   this._readerActive = false;
+  this._privateBrowsing = false;
   this.userScrollPos = { x: 0, y: 0 };
   this.viewportExcludesHorizontalMargins = true;
   this.viewportExcludesVerticalMargins = true;
@@ -2640,6 +2646,7 @@ Tab.prototype = {
     let isPrivate = ("isPrivate" in aParams) && aParams.isPrivate;
     if (isPrivate) {
       this.browser.docShell.QueryInterface(Ci.nsILoadContext).usePrivateBrowsing = true;
+      this._privateBrowsing = true;
     }
 
     this.browser.stop();
@@ -4073,7 +4080,11 @@ Tab.prototype = {
   get readerActive() {
     return this._readerActive;
   },
-
+ 
+  get isPrivate() {
+    return this._privateBrowsing;  
+  },
+  
   // nsIBrowserTab
   get window() {
     if (!this.browser)
@@ -7090,16 +7101,32 @@ let Reader = {
       delete this.pageAction.id;
     }
 
+	//let isPrivate = PrivateBrowsingUtils.isWindowPrivate(tab.contentWindow);
+	let isPrivate = false;
+	let iconURL;
     if (tab.readerActive) {
       this.pageAction.id = NativeWindow.pageactions.add({
         title: Strings.browser.GetStringFromName("readerMode.exit"),
         icon: "drawable://reader_active",
         clickCallback: this.pageAction.readerModeCallback
       });
-    } else if (tab.readerEnabled) {
+    } else {
+      if (tab.readerEnabled) {
+	      if (tab.isPrivate) {
+	        iconURL="drawable://reader_private";
+	      } else {
+	        iconURL="drawable://reader";
+	      }
+	  } else {
+	      if (tab.isPrivate) {
+	        iconURL="drawable://reader_private_unavailable";
+	      } else {
+	        iconURL="drawable://reader_unavailable";
+	      }
+	  }
       this.pageAction.id = NativeWindow.pageactions.add({
         title: Strings.browser.GetStringFromName("readerMode.enter"),
-        icon: "drawable://reader",
+        icon: iconURL,
         clickCallback:this.pageAction.readerModeCallback,
         longClickCallback: this.pageAction.readerModeActiveCallback
       });

@@ -122,6 +122,10 @@ class SearchEngineRow extends AnimatedHeightLayout {
         mUrlOpenListener = listener;
     }
 
+    public void setSuggestIconVisibility(int visible) {
+    	mSuggestionView.getChildAt(0).setVisibility(visible);
+    }
+    
     public void updateFromSearchEngine(SearchEngine searchEngine, boolean doAnimation) {
         // Update search engine reference
         mSearchEngine = searchEngine;

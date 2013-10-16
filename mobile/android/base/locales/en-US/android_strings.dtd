@@ -6,7 +6,9 @@
 <!ENTITY  no_space_to_start_error "There is not enough space available for &brandShortName; to start.">
 <!ENTITY  error_loading_file "An error occurred when trying to load files required to run &brandShortName;">
 
-<!ENTITY  awesomebar_all_pages_title "Top Sites">
+<!ENTITY  awesomebar_cntopsites_title "Top Sites">
+<!ENTITY  awesomebar_baidu_title "Search">
+<!ENTITY  awesomebar_all_pages_title "Baidu">
 <!ENTITY  awesomebar_bookmarks_title "Bookmarks">
 <!ENTITY  awesomebar_history_title "History">
 <!ENTITY  awesomebar_switch_to_tab "Switch to tab">
@@ -84,7 +86,12 @@
 <!ENTITY pref_header_help "Help">
 <!ENTITY pref_header_vendor "&vendorShortName;">
 <!ENTITY pref_header_devtools "Developer tools">
-
+<!ENTITY pref_proxy_menu "Proxy">
+<!ENTITY pref_proxy_none "No proxy">
+<!ENTITY pref_proxy_system "Use system proxy">
+<!ENTITY pref_proxy_manual "Manual proxy">
+<!ENTITY pref_proxy_http_proxy "HTTP Proxy">
+<!ENTITY pref_proxy_http_port "HTTP Port">
 <!ENTITY pref_cookies_menu "Cookies">
 <!ENTITY pref_cookies_accept_all "Enabled">
 <!ENTITY pref_cookies_not_accept_foreign "Enabled, excluding 3rd party">
@@ -188,6 +195,8 @@ size. -->
 <!ENTITY save_as_pdf "Save as PDF">
 <!ENTITY find_in_page "Find in Page">
 <!ENTITY desktop_mode "Request Desktop Site">
+<!ENTITY no_image_mode "No Image Mode">
+<!ENTITY barcode_scanner "Barcode Scanner">
 <!ENTITY tools "Tools">
 <!ENTITY new_tab "New Tab">
 <!ENTITY new_private_tab "New Private Tab">

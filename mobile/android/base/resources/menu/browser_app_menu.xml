@@ -38,6 +38,13 @@
           android:title="@string/desktop_mode"
           android:checkable="true" />
 
+    <item android:id="@+id/no_image_mode"
+          android:title="@string/no_image_mode"
+          android:checkable="true" />
+
+    <item android:id="@+id/barcode_scanner"
+          android:title="@string/barcode_scanner" />
+
     <item android:id="@+id/addons"
           android:title="@string/addons"/>
 

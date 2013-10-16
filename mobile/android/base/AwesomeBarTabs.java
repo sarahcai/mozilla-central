@@ -142,6 +142,7 @@ public class AwesomeBarTabs extends TabHost
 
         mTabs = new AwesomeBarTab[] {
             new AllPagesTab(mContext),
+            new CnTopsitesTab(mContext),
             new BookmarksTab(mContext),
             new HistoryTab(mContext)
         };
@@ -292,6 +293,10 @@ public class AwesomeBarTabs extends TabHost
         }
     }
 
+    public CnTopsitesTab getCnTopsitesTab() {
+    	return (CnTopsitesTab)getAwesomeBarTabForTag("cntopsites");
+    }
+    
     public AllPagesTab getAllPagesTab() {
         return (AllPagesTab)getAwesomeBarTabForTag("allPages");
     }
@@ -312,13 +317,13 @@ public class AwesomeBarTabs extends TabHost
         // reset the pager adapter to force repopulating the cache
         mViewPager.setAdapter(mPagerAdapter);
 
-        // Ensure the 'All Pages' tab is selected
-        AllPagesTab allPages = getAllPagesTab();
-        getTabWidget().setCurrentTab(getTabIdByTag(allPages.getTag()));
+        // Ensure the 'AllPages' tab is selected
+        AllPagesTab allpages = getAllPagesTab();
+        getTabWidget().setCurrentTab(getTabIdByTag(allpages.getTag()));
         styleSelectedTab();
 
         // Perform the actual search
-        allPages.filter(searchTerm, handler);
+        allpages.filter(searchTerm, handler);
 
         // If searching, hide the tabs bar
         findViewById(R.id.tab_widget_container).setVisibility(mSearching ? View.GONE : View.VISIBLE);

@@ -24,6 +24,11 @@ import org.mozilla.gecko.util.UiAsyncTask;
 import org.mozilla.gecko.widget.AboutHome;
 import org.mozilla.gecko.widget.GeckoActionProvider;
 import org.mozilla.gecko.widget.ButtonToast;
+import org.mozilla.gecko.zxing.client.android.CaptureActivity;
+import org.mozilla.gecko.zxing.client.android.result.ResultHandler;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,6 +39,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -50,6 +56,7 @@ import android.nfc.NfcEvent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -68,7 +75,12 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.EnumSet;
 import java.util.Vector;
@@ -93,6 +105,7 @@ abstract public class BrowserApp extends GeckoApp
     private static final int READER_ADD_DUPLICATE = 2;
 
     private static final String ADD_SHORTCUT_TOAST = "add_shortcut_toast";
+
     public static final String GUEST_BROWSING_ARG = "--guest";
 
     private static final String STATE_ABOUT_HOME_TOP_PADDING = "abouthome_top_padding";
@@ -101,6 +114,7 @@ abstract public class BrowserApp extends GeckoApp
     public static BrowserToolbar mBrowserToolbar;
     private AboutHome mAboutHome;
     protected Telemetry.Timer mAboutHomeStartupTimer = null;
+    private Boolean mNoImageMode = false;
 
     // Set the default session restore value
     private int mSessionRestore = -1;
@@ -141,6 +155,9 @@ abstract public class BrowserApp extends GeckoApp
 
     // We'll ask for feedback after the user launches the app this many times.
     private static final int FEEDBACK_LAUNCH_COUNT = 15;
+
+    // ZXing request code.
+    private static final int ZXING_REQUEST_CODE = 1997;
 
     // Whether the dynamic toolbar pref is enabled.
     private boolean mDynamicToolbarEnabled = false;
@@ -194,8 +211,12 @@ abstract public class BrowserApp extends GeckoApp
                         hideAboutHome();
                     }
 
+                    // Dismiss any SiteIdentity Popup
                     if (mSiteIdentityPopup != null)
                         mSiteIdentityPopup.dismiss();
+                    if ("about:barcode".equals(tab.getURL())) {
+                        openBarcodeScanner();
+                    }
 
                     final TabsPanel.Panel panel = tab.isPrivate()
                                                 ? TabsPanel.Panel.PRIVATE_TABS
@@ -618,9 +639,13 @@ abstract public class BrowserApp extends GeckoApp
     public boolean onContextItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.pasteandgo: {
-                String text = Clipboard.getText();
+            	String text = Clipboard.getText();
                 if (!TextUtils.isEmpty(text)) {
-                    Tabs.getInstance().loadUrl(text);
+                    if (text.equals("about:barcode")) {
+                        openBarcodeScanner();
+                    } else {
+                        Tabs.getInstance().loadUrl(text);
+                    }
                 }
                 return true;
             }
@@ -968,6 +993,29 @@ abstract public class BrowserApp extends GeckoApp
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         String url = null;
 
+        if(requestCode == ZXING_REQUEST_CODE) {
+            switch(resultCode) {
+                case ResultHandler.SEARCH_CODE: {
+                    if(data != null) {
+                        Bundle bundle = data.getExtras();
+                        url = bundle.getString(ResultHandler.SEARCH_KEY);
+                        Tabs.getInstance().searchUrlInTab(url);
+                    }
+                    break;
+                }
+
+                case ResultHandler.URL_CODE: {
+                    if(data != null) {
+                        Bundle bundle = data.getExtras();
+                        url = bundle.getString(ResultHandler.URL_KEY);
+                        Tabs.getInstance().loadUrlInTab(url);
+                    }
+                    break;
+                }
+                default: return;
+            }
+        }
+
         // Don't update the url in the toolbar if the activity was cancelled.
         if (resultCode == Activity.RESULT_OK && data != null) {
             // Don't update the url if the activity was launched to pick a site.
@@ -975,6 +1023,16 @@ abstract public class BrowserApp extends GeckoApp
             if (!AwesomeBar.Target.PICK_SITE.toString().equals(targetKey)) {
                 // Update the toolbar with the url that was just entered.
                 url = data.getStringExtra(AwesomeBar.URL_KEY);
+
+                // If the URL is "about:barcode", open barcode scanner
+                // instead of opening an URL.
+                try {
+	                if (url.equals("about:barcode")) {
+	                    super.openBarcodeScanner();
+	                    mBrowserToolbar.fromAwesomeBarSearch(url);
+	                    return;
+	                }
+	             } catch (Exception e) {}
             }
         }
 
@@ -1169,6 +1227,10 @@ abstract public class BrowserApp extends GeckoApp
     @Override
     public void addTab() {
         showAwesomebar(AwesomeBar.Target.NEW_TAB);
+    }
+
+    public void addHomeTab() {
+    	Tabs.getInstance().loadUrl("about:home", Tabs.LOADURL_NEW_TAB);
     }
 
     @Override
@@ -1378,6 +1440,17 @@ abstract public class BrowserApp extends GeckoApp
         refreshToolbarHeight();
     }
 
+    public void createBarcodeScannerShortcut() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean firstStart = prefs.getBoolean("first_start", true);
+        if (firstStart) {
+            Editor pEditor = prefs.edit();
+            pEditor.putBoolean("first_start", false);
+            pEditor.commit();
+            GeckoAppShell.createShortcut(getResources().getString(R.string.barcode_shortcut), "about:barcode", "about:barcode", "bookmark");
+        }
+    }
+
     private class HideTabsTouchListener implements TouchEventInterceptor {
         private boolean mIsHidingTabs = false;
 
@@ -1560,7 +1633,7 @@ abstract public class BrowserApp extends GeckoApp
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
 
-        // Inform the menu about the action-items bar. 
+        // Inform the menu about the action-items bar.
         if (menu instanceof GeckoMenu && HardwareUtils.isTablet())
             ((GeckoMenu) menu).setActionItemBarPresenter(mBrowserToolbar);
 
@@ -1631,6 +1704,25 @@ abstract public class BrowserApp extends GeckoApp
         });
     }
 
+    public void initNoImageMode(MenuItem item) {
+    	final MenuItem noImageMode = item;
+    	PrefsHelper.getPref("permissions.default.image", new PrefsHelper.PrefHandlerBase() {
+    		@Override
+    		public void prefValue(String pref, int value) {
+    			if (value == 1 || value == 3) {
+    				mNoImageMode = false;
+    			}
+    			if (value == 2) {
+    				mNoImageMode = true;
+    			}
+    		}
+    		@Override
+    		public void finish() {
+    			noImageMode.setChecked(mNoImageMode);
+    		}
+		});
+    }
+
     @Override
     public boolean onPrepareOptionsMenu(Menu aMenu) {
         if (aMenu == null)
@@ -1649,17 +1741,21 @@ abstract public class BrowserApp extends GeckoApp
         MenuItem desktopMode = aMenu.findItem(R.id.desktop_mode);
         MenuItem enterGuestMode = aMenu.findItem(R.id.new_guest_session);
         MenuItem exitGuestMode = aMenu.findItem(R.id.exit_guest_session);
+        MenuItem noImageMode = aMenu.findItem(R.id.no_image_mode);
+        MenuItem barcodeScanner = aMenu.findItem(R.id.barcode_scanner);
 
         // Only show the "Quit" menu item on pre-ICS or television devices.
         // In ICS+, it's easy to kill an app through the task switcher.
-        aMenu.findItem(R.id.quit).setVisible(Build.VERSION.SDK_INT < 14 || HardwareUtils.isTelevision());
+        // aMenu.findItem(R.id.quit).setVisible(Build.VERSION.SDK_INT < 14 || HardwareUtils.isTelevision());
 
+        aMenu.findItem(R.id.quit).setVisible(true);
         if (tab == null || tab.getURL() == null) {
             bookmark.setEnabled(false);
             forward.setEnabled(false);
             share.setEnabled(false);
             saveAsPDF.setEnabled(false);
             findInPage.setEnabled(false);
+            barcodeScanner.setEnabled(false);
             return true;
         }
 
@@ -1671,6 +1767,11 @@ abstract public class BrowserApp extends GeckoApp
         forward.setEnabled(tab.canDoForward());
         desktopMode.setChecked(tab.getDesktopMode());
         desktopMode.setIcon(tab.getDesktopMode() ? R.drawable.ic_menu_desktop_mode_on : R.drawable.ic_menu_desktop_mode_off);
+
+        barcodeScanner.setEnabled(true);
+
+        noImageMode.setChecked(false);
+        initNoImageMode(noImageMode);
 
         String url = tab.getURL();
         if (ReaderModeUtils.isAboutReader(url)) {
@@ -1747,6 +1848,28 @@ abstract public class BrowserApp extends GeckoApp
             enterGuestMode.setVisible(true);
 
         return true;
+    }
+
+    private void toggleNoImageMode() {
+    	PrefsHelper.getPref("permissions.default.image", new PrefsHelper.PrefHandlerBase() {
+    		@Override
+    		public void prefValue(String pref, int value) {
+    			if (value == 1 || value == 3) {
+    				mNoImageMode = true;
+    			}
+    			if (value == 2) {
+    				mNoImageMode = false;
+    			}
+    		}
+    		@Override
+    		public void finish() {
+    			if (mNoImageMode) {
+    				PrefsHelper.setPref("permissions.default.image", 2);
+    			} else {
+    				PrefsHelper.setPref("permissions.default.image", 1);
+    			}
+    		}
+		});
     }
 
     @Override
@@ -1828,8 +1951,11 @@ abstract public class BrowserApp extends GeckoApp
                 }
                 GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("DesktopMode:Change", args.toString()));
                 return true;
+            case R.id.no_image_mode:
+            	toggleNoImageMode();
+            	return true;
             case R.id.new_tab:
-                addTab();
+                addHomeTab();
                 return true;
             case R.id.new_private_tab:
                 addPrivateTab();
@@ -1839,6 +1965,8 @@ abstract public class BrowserApp extends GeckoApp
                 return true;
             case R.id.exit_guest_session:
                 showGuestModeDialog(GuestModeDialog.LEAVING);
+            case R.id.barcode_scanner:
+                super.openBarcodeScanner();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -1903,7 +2031,7 @@ abstract public class BrowserApp extends GeckoApp
     /*
      * If the app has been launched a certain number of times, and we haven't asked for feedback before,
      * open a new tab with about:feedback when launching the app from the icon shortcut.
-     */ 
+     */
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);

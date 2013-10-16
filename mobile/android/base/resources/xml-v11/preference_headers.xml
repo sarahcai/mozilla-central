@@ -14,7 +14,7 @@
         <extra android:name="resource"
                android:value="preferences_customize_tablet"/>
     </header>
-
+    
     <header android:fragment="org.mozilla.gecko.GeckoPreferenceFragment"
             android:title="@string/pref_header_display">
         <extra android:name="resource"

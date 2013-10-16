@@ -46,5 +46,5 @@
         <extra android:name="resource"
                android:value="preferences_devtools"/>
     </PreferenceScreen>
-
+    
 </PreferenceScreen>

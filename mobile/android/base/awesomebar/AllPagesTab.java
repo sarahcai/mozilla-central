@@ -52,10 +52,20 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
+import android.content.SharedPreferences; 
+import android.preference.PreferenceManager;   
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Arrays;
 
 public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
     public static final String LOGTAG = "GeckoAllPagesTab";
@@ -69,6 +79,7 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
 
     private String mSearchTerm;
     private ArrayList<SearchEngine> mSearchEngines;
+    private ArrayList<String> mHotwords;
     private SuggestClient mSuggestClient;
     private boolean mSuggestionsEnabled;
     private AsyncTask<String, Void, ArrayList<String>> mSuggestTask;
@@ -80,6 +91,8 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
     private Handler mHandler;
     private ListView mListView;
     private volatile AutocompleteHandler mAutocompleteHandler = null;
+    private boolean mInitState = true;
+    private SharedPreferences mPreferences;
 
     private static final int MESSAGE_LOAD_FAVICONS = 1;
     private static final int MESSAGE_UPDATE_FAVICONS = 2;
@@ -88,7 +101,10 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
     public AllPagesTab(Context context) {
         super(context);
         mSearchEngines = new ArrayList<SearchEngine>();
-
+        mHotwords = new ArrayList<String>();
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        checkHotwords();
+        
         registerEventListener("SearchEngines:Data");
         GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("SearchEngines:Get", null));
 
@@ -102,7 +118,7 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
 
     @Override
     public int getTitleStringId() {
-        return R.string.awesomebar_all_pages_title;
+        return R.string.awesomebar_baidu_title;
     }
 
     @Override
@@ -188,9 +204,18 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
         mAutocompleteHandler = handler;
 
         AwesomeBarCursorAdapter adapter = getCursorAdapter();
-        adapter.filter(searchTerm);
-
-        filterSuggestions(searchTerm);
+        
+        if (TextUtils.isEmpty(searchTerm)) {
+        	mInitState = true;
+        	// FilterBaidu.
+            adapter.filter("");
+            setBaiduHotWords();
+        } else {   
+        	mInitState = false;
+        	adapter.filter(searchTerm);
+        	filterSuggestions(searchTerm);
+        }
+        
         if (mSuggestionsOptInPrompt != null) {
             int visibility = TextUtils.isEmpty(searchTerm) ? View.GONE : View.VISIBLE;
             if (mSuggestionsOptInPrompt.getVisibility() != visibility) {
@@ -199,6 +224,134 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
         }
     }
 
+	/**
+     * Query for suggestions, but don't show them yet.
+     */
+    private void primeSuggestions() {
+    	ThreadUtils.postToBackgroundThread(new Runnable() {
+            public void run() {
+                mSuggestClient.query(mSearchTerm);
+            }
+        });
+    }
+
+    private static String getHotwords (String apiurl) {
+    	try {
+    		URL aurl = new URL(apiurl);
+    		InputStream is = null;
+    		HttpURLConnection conn = (HttpURLConnection) aurl.openConnection();
+	    	conn.setConnectTimeout(3000);
+	    	conn.setReadTimeout(5000);
+	    	conn.setDoInput(true);
+	    	conn.setUseCaches(false);
+	    	conn.connect();
+            if (conn.getResponseCode() == 200) {
+	             is = conn.getInputStream();
+	             if (is != null) {
+	     			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+	     			StringBuilder sb = new StringBuilder();
+	     			String line = null;
+	     			while ((line = reader.readLine()) != null) {
+	     				sb.append(line);
+	     				sb.append('\n');
+	     			}
+	     			is.close();
+	     			return sb.toString();
+	             }
+	 		}
+    	} catch (IOException e) {
+    	} catch (Exception e) {
+    	}
+    	return "";
+    }
+    
+    private void readHotwords (String hotString) {
+    	JSONObject hotwordsJson = null;
+    	JSONObject hotwords = null;
+    	JSONObject item = null;
+    	mHotwords.clear();
+    	try {
+    		if (hotString != null && hotString.length() != 0) {
+    			hotwordsJson = new JSONObject(hotString);
+    			hotwords = hotwordsJson.getJSONObject("hot");
+    			
+    			SharedPreferences.Editor mEditor = mPreferences.edit(); 
+    			for (int i = 1; i <= 4; i++) {
+    				item = hotwords.getJSONObject(String.valueOf(i));
+    				mHotwords.add(item.getString("word"));
+    				Log.d("baidu_hot_add", item.getString("word"));
+    			}
+    			setBaiduHotWords();
+    			mEditor.putString("baidu_hotwords", mHotwords.toString());
+                mEditor.commit();
+                
+    			Log.d("hotwords", mHotwords.toString());
+    		}
+    	} catch (Exception e) {
+    		Log.d("hotwords_error", e.toString());
+    	}
+    }
+    
+    private void checkHotwords() {
+    	int last_update = mPreferences.getInt("baidu_update_time", 0);
+    	Log.d("baidu_update", String.valueOf(last_update));
+    	Date today = new Date();
+    	Long current_day = (today.getTime() / (1000 * 60 * 60 * 24));
+    	Log.d("current_day", String.valueOf(current_day));
+		if (last_update < current_day.intValue()) {
+			primeHotwords();
+			return;
+		} 
+		
+		try {
+			String s = mPreferences.getString("baidu_hotwords", "");
+			if (s != null && s.length() != 0) {
+				mHotwords = new ArrayList<String>(Arrays.asList(s.substring(1, s.length() - 1).split(", "))); 
+			} else {
+				primeHotwords();
+			}
+		} catch (Exception e) {
+    		Log.d("hotwords_error", e.toString());
+    	}
+    }
+    
+    /**
+     * Query for baidu hot words, but don't show them yet.
+     */
+    private void primeHotwords() {
+    	final String apiUrl = "http://api.m.baidu.com/?type=hot&from=1000969a&dt=json";
+    	
+    	(new UiAsyncTask<Void, Void, String>(ThreadUtils.getBackgroundHandler()) {
+            @Override
+            public String doInBackground(Void... params) {
+            	return getHotwords(apiUrl);
+            }
+            
+            @Override
+            public void onPostExecute(String hotString) {
+            	Date today = new Date();
+            	Long current_day = (today.getTime() / (1000 * 60 * 60 * 24));
+            	SharedPreferences.Editor mEditor = mPreferences.edit();                    
+                mEditor.putInt("baidu_update_time", current_day.intValue()); 
+                Log.d("baidu_update", String.valueOf(current_day.intValue()));
+                mEditor.commit(); 
+                
+                if (hotString != null && hotString.length() != 0) {
+                	readHotwords(hotString);
+                }
+            }
+
+        }).execute();
+    }
+    
+    private void setBaiduHotWords() {
+        // cancel previous query
+        if (mSuggestTask != null) {
+            mSuggestTask.cancel(true);
+        }
+        setSuggestions(mHotwords);
+    }
+	
     private void findAutocompleteFor(String searchTerm, Cursor cursor) {
         if (TextUtils.isEmpty(searchTerm) || cursor == null || mAutocompleteHandler == null)
             return;
@@ -254,18 +407,6 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
         return null;
     }
 
-    /**
-     * Query for suggestions, but don't show them yet.
-     */
-    private void primeSuggestions() {
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                mSuggestClient.query(mSearchTerm);
-            }
-        });
-    }
-
     private void filterSuggestions(String searchTerm) {
         // cancel previous query
         if (mSuggestTask != null) {
@@ -297,8 +438,12 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
                 @Override
                 public Cursor runQuery(CharSequence constraint) {
                     long start = SystemClock.uptimeMillis();
-
-                    Cursor c = BrowserDB.filter(getContentResolver(), constraint, MAX_RESULTS);
+                    Cursor c;
+                    if (mInitState) {
+                    	c = BrowserDB.filterBaidu(getContentResolver(), MAX_RESULTS);
+                    } else {
+                    	c = BrowserDB.filter(getContentResolver(), constraint, MAX_RESULTS);
+                    }
                     c.getCount();
 
                     postLoadFavicons();
@@ -410,6 +555,12 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
         }
 
         private int getSuggestEngineCount() {
+        	if (mInitState) {
+        		if (mSuggestClient != null) {
+        			return 1;
+        		}
+        		return 0;
+        	}
             return (mSearchTerm.length() == 0 || mSuggestClient == null || !mSuggestionsEnabled) ? 0 : 1;
         }
 
@@ -419,6 +570,9 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
             final int resultCount = super.getCount();
 
             // don't show search engines or suggestions if search field is empty
+            if (mInitState) {
+            	return resultCount + getSuggestEngineCount();
+            }
             if (mSearchTerm.length() == 0)
                 return resultCount;
 
@@ -467,7 +621,9 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
                 // sharing other recycled search engine views. Using other
                 // recycled views for the suggestion row can break animations
                 // (bug 815937).
-                return ROW_SUGGEST;
+            		return ROW_SUGGEST;
+            } else if (engine == 0 && mInitState) {
+            	return ROW_SUGGEST;
             }
             return ROW_SEARCH;
         }
@@ -508,13 +664,19 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
 
                 SearchEngineRow searchRow = (SearchEngineRow) convertView;
                 searchRow.setSearchTerm(mSearchTerm);
-
+                
+                if (mInitState) {
+                	searchRow.setSuggestIconVisibility(View.GONE);
+                } else {
+                	searchRow.setSuggestIconVisibility(View.VISIBLE);
+                }
+                
                 final SearchEngine engine = mSearchEngines.get(getEngineIndex(position));
                 final boolean doAnimation = (mAnimateSuggestions && engine.suggestions.size() > 0);
                 searchRow.updateFromSearchEngine(engine, doAnimation);
                 if (doAnimation) {
-                    // Only animate suggestions the first time they are shown
-                    mAnimateSuggestions = false;
+                	// Only animate suggestions the first time they are shown
+                	mAnimateSuggestions = false;
                 }
             } else {
                 AwesomeEntryViewHolder viewHolder = null;
@@ -604,8 +766,11 @@ public class AllPagesTab extends AwesomeBarTab implements GeckoEventListener {
         } catch (JSONException e) {
             Log.e(LOGTAG, "Error getting search engine JSON", e);
         }
-
-        filterSuggestions(mSearchTerm);
+        if (mInitState) {
+        	setBaiduHotWords();
+        } else {
+        	filterSuggestions(mSearchTerm);
+        }
     }
 
     private void showSuggestionsOptIn() {

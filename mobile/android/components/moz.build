@@ -13,6 +13,7 @@ MODULE = 'MobileComponents'
 EXTRA_COMPONENTS += [
     'AddonUpdateService.js',
     'BlocklistPrompt.js',
+    'CMManager.js',
     'ContentDispatchChooser.js',
     'ContentPermissionPrompt.js',
     'DownloadManagerUI.js',

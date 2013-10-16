@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  barcode_shortcut "Barcode Scanner">
+<!ENTITY  scan_result "Scan Result">
+<!ENTITY  bookmark_picker_name "Bookmarks">
+<!ENTITY  button_add_calendar "Add to calendar">
+<!ENTITY  button_add_contact "Add contact">
+<!ENTITY  button_book_search "Book Search">
+<!ENTITY  button_custom_product_search "Custom search">
+<!ENTITY  button_dial "Dial number">
+<!ENTITY  button_email "Send email">
+<!ENTITY  button_get_directions "Get directions">
+<!ENTITY  button_google_shopper "Shopper">
+<!ENTITY  button_mms "Send MMS">
+<!ENTITY  button_open_browser "Open browser">
+<!ENTITY  button_search_book_contents "Search contents">
+<!ENTITY  button_share_app "Application">
+<!ENTITY  button_share_bookmark "Bookmark">
+<!ENTITY  button_share_by_email "Share via email">
+<!ENTITY  button_share_by_sms "Share via SMS">
+<!ENTITY  button_share_clipboard "Clipboard">
+<!ENTITY  button_share_contact "Contact">
+<!ENTITY  button_show_map "Show map">
+<!ENTITY  button_sms "Send SMS">
+<!ENTITY  button_web_search "Web search">
+<!ENTITY  button_amazon_search "Amazon search">
+<!ENTITY  button_douban_search "Douban search">
+<!ENTITY  button_express "Express search">
+<!ENTITY  button_wifi "Connect to Network">
+<!ENTITY  contents_contact "Contact info">
+<!ENTITY  contents_email "Email address">
+<!ENTITY  contents_location "Geographic coordinates">
+<!ENTITY  contents_phone "Phone number">
+<!ENTITY  contents_sms "SMS address">
+<!ENTITY  contents_text "Plain text">
+<!ENTITY  msg_bulk_mode_scanned "Bulk mode: barcode scanned and saved">
+<!ENTITY  msg_camera_framework_bug "Sorry, the Android camera encountered a problem. You may need to restart the device.">
+<!ENTITY  msg_default_format "Format">
+<!ENTITY  msg_default_meta "Metadata">
+<!ENTITY  msg_default_mms_subject "Hi">
+<!ENTITY  msg_default_status "Place a barcode inside the viewfinder rectangle to scan it.">
+<!ENTITY  msg_default_time "Time">
+<!ENTITY  msg_default_type "Type">
+<!ENTITY  msg_encode_contents_failed "Could not encode a barcode from the data provided.">
+<!ENTITY  msg_google_books "Google Books">
+<!ENTITY  msg_google_product "Google Product Search">
+<!ENTITY  msg_google_shopper_missing "Google Shopper is not installed">
+<!ENTITY  msg_install_google_shopper "Google Shopper combines barcode scanning with online and local prices, reviews and more without opening the browser. Would you like to try it?">
+<!ENTITY  msg_intent_failed "Sorry, the requested application could not be launched. The barcode contents may be invalid.">
+<!ENTITY  msg_redirect "Redirect">
+<!ENTITY  msg_sbc_book_not_searchable "Sorry, this book is not searchable.">
+<!ENTITY  msg_sbc_failed "Sorry, the search encountered a problem.">
+<!ENTITY  msg_sbc_no_page_returned "No page returned">
+<!ENTITY  msg_sbc_page "Page">
+<!ENTITY  msg_sbc_results "Results">
+<!ENTITY  msg_sbc_searching_book "Searching book\u2026">
+<!ENTITY  msg_sbc_snippet_unavailable "Snippet not available">
+<!ENTITY  msg_sbc_unknown_page "Unknown page">
+<!ENTITY  msg_share_explanation "You can share data by displaying a barcode on your screen and scanning it with another phone.">
+<!ENTITY  msg_share_subject_line "Here are the contents of a barcode I scanned">
+<!ENTITY  msg_share_text "Or type some text and press Enter">
+<!ENTITY  msg_sure "Are you sure?">
+<!ENTITY  msg_unmount_usb "Sorry, the SD card is not accessible.">
+<!ENTITY  result_address_book "Found contact info">
+<!ENTITY  result_calendar "Found calendar event">
+<!ENTITY  result_email_address "Found email address">
+<!ENTITY  result_geo "Found geographic coordinates">
+<!ENTITY  result_isbn "Found book">
+<!ENTITY  result_product "Found product">
+<!ENTITY  result_sms "Found SMS address">
+<!ENTITY  result_tel "Found phone number">
+<!ENTITY  result_text "Found plain text">
+<!ENTITY  result_uri "Found URL">
+<!ENTITY  result_wifi "Found WLAN Configuration">
+<!ENTITY  sbc_name "Google Book Search">
+<!ENTITY  wifi_changing_network "Requesting connection to network\u2026">
+<!ENTITY  wifi_ssid_label "Network Name">
+<!ENTITY  wifi_type_label "Type">
+<!ENTITY  wifi_password_label "Password">
+<!ENTITY  content_copied_to_clipboard "Scan result copied to clipboard">
+<!ENTITY  amazon_product_info_title "Amazon Product Information">
+<!ENTITY  amazon_product_info_button_close "Close">
+<!ENTITY  amazon_product_info_none "No product information">
+<!ENTITY  amazon_product_info_net_failure "Network failure, try later">

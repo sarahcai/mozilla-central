@@ -10,4 +10,7 @@ export MOZ_TELEMETRY_REPORTING=1
 
 ac_add_options --enable-official-branding
 
+mk_add_options MOZ_OBJDIR=$HOME/fennec/objdir-droid
+mk_add_options MOZ_MAKE_FLAGS="-j9 -s"
+
 . "$topsrcdir/mobile/android/config/mozconfigs/common.override"

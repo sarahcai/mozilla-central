@@ -37,6 +37,8 @@ public class BrowserDB {
         public void invalidateCachedState();
 
         public Cursor filter(ContentResolver cr, CharSequence constraint, int limit);
+        
+        public Cursor filterBaidu(ContentResolver cr, int limit);
 
         // This should onlyl return frecent sites, BrowserDB.getTopSites will do the
         // work to combine that list with the pinned sites list
@@ -133,6 +135,10 @@ public class BrowserDB {
 
     public static Cursor filter(ContentResolver cr, CharSequence constraint, int limit) {
         return sDb.filter(cr, constraint, limit);
+    }
+    
+    public static Cursor filterBaidu(ContentResolver cr, int limit) {
+        return sDb.filterBaidu(cr, limit);
     }
 
     public static Cursor getTopSites(ContentResolver cr, int limit) {

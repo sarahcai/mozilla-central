@@ -27,6 +27,13 @@
                    android:entries="@array/pref_update_autodownload_entries"
                    android:entryValues="@array/pref_update_autodownload_values"
                    android:persistent="false" />
+   
+   <PreferenceScreen android:title="@string/pref_proxy_menu"
+                     android:key="android.not_a_preference.proxy.preferences"
+                     android:fragment="org.mozilla.gecko.GeckoPreferenceFragment" >
+       <extra android:name="resource"
+              android:value="preferences_proxy" />
+   </PreferenceScreen>
 
 </PreferenceScreen>
 
