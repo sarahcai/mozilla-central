@@ -1,0 +1,44 @@
+        <activity android:name="org.mozilla.gecko.zxing.client.android.CaptureActivity"
+                  android:screenOrientation="portrait"
+                  android:clearTaskOnLaunch="true"
+                  android:stateNotNeeded="true"
+                  android:configChanges="orientation|keyboardHidden"
+                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                  android:windowSoftInputMode="stateAlwaysHidden">
+          <intent-filter>
+            <action android:name="org.mozilla.gecko.zxing.client.android.intent.action.MAIN"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.LAUNCHER"/>
+          </intent-filter>
+          <intent-filter>
+            <action android:name="org.mozilla.gecko.zxing.client.android.SCAN"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.DEFAULT"/>
+          </intent-filter>
+          <!-- Allow web apps to launch Barcode Scanner by linking to http://zxing.appspot.com/scan. -->
+          <intent-filter>
+            <action android:name="org.mozilla.gecko.zxing.client.android.intent.action.VIEW"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.DEFAULT"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.BROWSABLE"/>
+            <data android:scheme="http" android:host="zxing.appspot.com" android:path="/scan"/>
+          </intent-filter>
+          <!-- We also support a Google Product Search URL. -->
+          <intent-filter>
+            <action android:name="org.mozilla.gecko.zxing.client.android.intent.action.VIEW"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.DEFAULT"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.BROWSABLE"/>
+            <data android:scheme="http" android:host="www.google.com" android:path="/m/products/scan"/>
+          </intent-filter>
+          <!-- And the UK version. -->
+          <intent-filter>
+            <action android:name="org.mozilla.gecko.zxing.client.android.intent.action.VIEW"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.DEFAULT"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.BROWSABLE"/>
+            <data android:scheme="http" android:host="www.google.co.uk" android:path="/m/products/scan"/>
+          </intent-filter>
+          <!-- Support zxing://scan/?... like iPhone app -->
+          <intent-filter>
+            <action android:name="org.mozilla.gecko.zxing.client.android.intent.action.VIEW"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.DEFAULT"/>
+            <category android:name="org.mozilla.gecko.zxing.client.android.intent.category.BROWSABLE"/>
+            <data android:scheme="zxing" android:host="scan" android:path="/"/>
+          </intent-filter>
+        </activity>

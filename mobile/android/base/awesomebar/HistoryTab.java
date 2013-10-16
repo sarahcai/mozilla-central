@@ -75,6 +75,8 @@ public class HistoryTab extends AwesomeBarTab {
             mView.setTag(TAG);
 
             ExpandableListView list = (ExpandableListView)mView;
+            int padding = (int) getResources().getDimension(R.dimen.awesomebar_list_padding);
+            list.setPadding(padding, 0, padding, 0);
             list.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
                 @Override
                 public boolean onChildClick(ExpandableListView parent, View view,

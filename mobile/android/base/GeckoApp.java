@@ -27,6 +27,12 @@ import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.util.UiAsyncTask;
 import org.mozilla.gecko.widget.ButtonToast;
+import org.mozilla.gecko.zxing.client.android.CaptureActivity;
+
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -55,6 +61,7 @@ import android.hardware.SensorEventListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.net.wifi.ScanResult;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -133,7 +140,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 abstract public class GeckoApp
-                extends GeckoActivity 
+                extends GeckoActivity
     implements GeckoEventListener, SensorEventListener, LocationListener,
                            Tabs.OnTabsChangedListener, GeckoEventResponder,
                            GeckoMenu.Callback, GeckoMenu.MenuPresenter,
@@ -193,6 +200,11 @@ abstract public class GeckoApp
     private PromptService mPromptService;
     private TextSelection mTextSelection;
 
+    // Geolocation from Baidu
+    private static LocationClient mLocationClient = null;
+    private static LocationClientOption mLocationClientOption = null;
+    private String BAIDU_PROVIDER = "BAIDU_GEOLOCATION";
+
     protected DoorHangerPopup mDoorHangerPopup;
     protected FormAssistPopup mFormAssistPopup;
     protected TabsPanel mTabsPanel;
@@ -228,6 +240,8 @@ abstract public class GeckoApp
 
     private static final String RESTARTER_ACTION = "org.mozilla.gecko.restart";
     private static final String RESTARTER_CLASS = "org.mozilla.gecko.Restarter";
+
+    private static final int ZXING_REQUEST_CODE = 1997;
 
     @SuppressWarnings("serial")
     class SessionRestoreException extends Exception {
@@ -287,6 +301,14 @@ abstract public class GeckoApp
 
     public FormAssistPopup getFormAssistPopup() {
         return mFormAssistPopup;
+    }
+
+    public static LocationClient getLocationClient() {
+        return mLocationClient;
+    }
+
+    public static LocationClientOption getLocationClientOption() {
+        return mLocationClientOption;
     }
 
     @Override
@@ -395,9 +417,9 @@ abstract public class GeckoApp
                 onPreparePanel(featureId, mMenuPanel, mMenu);
             }
 
-            return mMenuPanel; 
+            return mMenuPanel;
         }
-  
+
         return super.onCreatePanelView(featureId);
     }
 
@@ -473,7 +495,7 @@ abstract public class GeckoApp
             mMenuPanel.addView((GeckoMenu) mMenu);
         }
     }
- 
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         // Handle hardware menu key presses separately so that we can show a custom menu in some cases.
@@ -523,6 +545,8 @@ abstract public class GeckoApp
     }
 
     public void addTab() { }
+
+    public void addHomeTab() {}
 
     public void addPrivateTab() { }
 
@@ -1062,7 +1086,7 @@ abstract public class GeckoApp
     public void requestRender() {
         mLayerView.requestRender();
     }
-    
+
     public void hidePlugins(Tab tab) {
         for (Layer layer : tab.getPluginLayers()) {
             if (layer instanceof PluginLayer) {
@@ -1386,21 +1410,28 @@ abstract public class GeckoApp
 
         initializeChrome();
 
-        // If we are doing a restore, read the session data and send it to Gecko
+        // If the URL is "about:barcode", open barcode scanner
+        // instead of opening an URL.
         String restoreMessage = null;
-        if (mRestoreMode != RESTORE_NONE && !mIsRestoringActivity) {
-            try {
-                // restoreSessionTabs() will create simple tab stubs with the
-                // URL and title for each page, but we also need to restore
-                // session history. restoreSessionTabs() will inject the IDs
-                // of the tab stubs into the JSON data (which holds the session
-                // history). This JSON data is then sent to Gecko so session
-                // history can be restored for each tab.
-                restoreMessage = restoreSessionTabs(isExternalURL);
-            } catch (SessionRestoreException e) {
-                // If restore failed, do a normal startup
-                Log.e(LOGTAG, "An error occurred during restore", e);
-                mRestoreMode = RESTORE_NONE;
+        if (passedUri != null && passedUri.equals("about:barcode")) {
+            openBarcodeScanner();
+            loadStartupTab(null);
+        } else {
+            // If we are doing a restore, read the session data and send it to Gecko
+            if (mRestoreMode != RESTORE_NONE && !mIsRestoringActivity) {
+                try {
+                    // restoreSessionTabs() will create simple tab stubs with the
+                    // URL and title for each page, but we also need to restore    
+                    // session history. restoreSessionTabs() will inject the IDs
+                    // of the tab stubs into the JSON data (which holds the session    
+                    // history). This JSON data is then sent to Gecko so session
+                    // history can be restored for each tab.
+                    restoreMessage = restoreSessionTabs(isExternalURL);
+                } catch (SessionRestoreException e) {
+                    // If restore failed, do a normal startup
+                    Log.e(LOGTAG, "An error occurred during restore", e);
+                    mRestoreMode = RESTORE_NONE;
+                }
             }
         }
 
@@ -1445,6 +1476,95 @@ abstract public class GeckoApp
                 }
             }, 1000 * 5 /* 5 seconds */);
         }
+
+        // Geolocation from Baidu
+        mLocationClient = new LocationClient(getApplicationContext());
+        mLocationClientOption = new LocationClientOption();
+        // Register the listener
+        mLocationClient.registerLocationListener(new BDLocationListener() {
+          @Override
+          public void onReceiveLocation(BDLocation location) {
+            if (location == null) {
+              return;
+            }
+            if (Log.isLoggable(LOGTAG, Log.DEBUG)) {
+              StringBuffer sb = new StringBuffer(256);
+              sb.append("time : ");
+              sb.append(location.getTime());
+              sb.append("\nerror code : ");
+              sb.append(location.getLocType());
+              sb.append("\nlatitude : ");
+              sb.append(location.getLatitude());
+              sb.append("\nlontitude : ");
+              sb.append(location.getLongitude());
+              sb.append("\nradius : ");
+              sb.append(location.getRadius());
+              if (location.getLocType() == BDLocation.TypeGpsLocation) {
+                sb.append("\nspeed : ");
+                sb.append(location.getSpeed());
+                sb.append("\nsatellite : ");
+                sb.append(location.getSatelliteNumber());
+              } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
+                sb.append("\naddr : ");
+                sb.append(location.getAddrStr());
+              }
+
+              Log.d(LOGTAG, sb.toString());
+            }
+
+            // Baidu to Google location interfaces
+            Location mLocation = new Location(BAIDU_PROVIDER);
+            mLocation.setSpeed(location.getSpeed());
+            mLocation.setLatitude(location.getLatitude());
+            mLocation.setLongitude(location.getLongitude());
+            if (location.hasRadius()) {
+              mLocation.setAccuracy(location.getRadius());
+            }
+            GeckoAppShell.sendEventToGecko(GeckoEvent.createLocationEvent(mLocation));
+          }
+
+          @Override
+          public void onReceivePoi(BDLocation poiLocation) {
+            if (poiLocation == null) {
+              return;
+            }
+            if (Log.isLoggable(LOGTAG, Log.DEBUG)) {
+              StringBuffer sb = new StringBuffer(256);
+              sb.append("Poi time : ");
+              sb.append(poiLocation.getTime());
+              sb.append("\nerror code : ");
+              sb.append(poiLocation.getLocType());
+              sb.append("\nlatitude : ");
+              sb.append(poiLocation.getLatitude());
+              sb.append("\nlontitude : ");
+              sb.append(poiLocation.getLongitude());
+              sb.append("\nradius : ");
+              sb.append(poiLocation.getRadius());
+              if (poiLocation.getLocType() == BDLocation.TypeNetWorkLocation) {
+                sb.append("\naddr : ");
+                sb.append(poiLocation.getAddrStr());
+              }
+              if (poiLocation.hasPoi()) {
+                sb.append("\nPoi:");
+                sb.append(poiLocation.getPoi());
+              } else {
+                sb.append("noPoi information");
+              }
+
+              Log.d(LOGTAG, sb.toString());
+            }
+
+            // Baidu to Google location interfaces
+            Location mLocation = new Location(BAIDU_PROVIDER);
+            mLocation.setSpeed(poiLocation.getSpeed());
+            mLocation.setLatitude(poiLocation.getLatitude());
+            mLocation.setLongitude(poiLocation.getLongitude());
+            if (poiLocation.hasRadius()) {
+              mLocation.setAccuracy(poiLocation.getRadius());
+            }
+            GeckoAppShell.sendEventToGecko(GeckoEvent.createLocationEvent(mLocation));
+          }
+        });
 
         // Check if launched from data reporting notification.
         if (ACTION_LAUNCH_SETTINGS.equals(action)) {
@@ -1839,6 +1959,12 @@ abstract public class GeckoApp
             GeckoAppShell.sendEventToGecko(GeckoEvent.createWebappLoadEvent(uri));
         } else if (ACTION_BOOKMARK.equals(action)) {
             String uri = getURIFromIntent(intent);
+            // If the URL is "about:barcode", open barcode scanner
+            // instead of opening an URL.
+            if(uri.equals("about:barcode")) {
+                openBarcodeScanner();
+                return;
+            }
             GeckoAppShell.sendEventToGecko(GeckoEvent.createBookmarkLoadEvent(uri));
         } else if (Intent.ACTION_SEARCH.equals(action)) {
             String uri = getURIFromIntent(intent);
@@ -2662,5 +2788,11 @@ abstract public class GeckoApp
             Log.wtf(LOGTAG, getPackageName() + " not found", e);
         }
         return versionCode;
+    }
+
+    public void openBarcodeScanner() {
+        Intent intent = new Intent(this, CaptureActivity.class);
+        startActivityForResult(intent, ZXING_REQUEST_CODE);
+        return;
     }
 }

@@ -46,6 +46,16 @@
         <item>0</item>
         <item>1</item>
         <item>2</item>
+    </string-array>
+    <string-array name="pref_proxy_entries">
+        <item>@string/pref_proxy_none</item>
+        <item>@string/pref_proxy_system</item>
+        <item>@string/pref_proxy_manual</item>
+    </string-array>
+    <string-array name="pref_proxy_values">
+        <item>0</item>
+        <item>5</item>
+        <item>1</item>
       </string-array>
     <string-array name="pref_donottrack_entries">
       <item>@string/pref_donottrack_disallow_tracking</item>
@@ -131,5 +141,39 @@
         <item>@string/tabs_normal</item>
         <item>@string/tabs_private</item>
         <item>@string/tabs_synced</item>
+    </string-array>
+
+    <string-array name="country_codes">
+        <item>-</item>
+        <item>AR</item>
+        <item>AU</item>
+        <item>BR</item>
+        <item>BG</item>
+        <item>CA</item>
+        <item>CH</item>
+        <item>CN</item>
+        <item>CZ</item>
+        <item>DE</item>
+        <item>DK</item>
+        <item>ES</item>
+        <item>FI</item>
+        <item>FR</item>
+        <item>GB</item>
+        <item>GR</item>
+        <item>HU</item>
+        <item>ID</item>
+        <item>IT</item>
+        <item>JP</item>
+        <item>KR</item>
+        <item>NL</item>
+        <item>PL</item>
+        <item>PT</item>
+        <item>RU</item>
+        <item>SE</item>
+        <item>SK</item>
+        <item>SI</item>
+        <item>TR</item>
+        <item>TW</item>
+        <item>US</item>
     </string-array>
 </resources>

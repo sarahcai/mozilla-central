@@ -79,6 +79,7 @@ public class AwesomeBar extends GeckoActivity
     private String mAutoCompleteResult = "";
     // The user typed part of the autocomplete result
     private String mAutoCompletePrefix = null;
+    private String defaultSearchEngine;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -406,10 +407,40 @@ public class AwesomeBar extends GeckoActivity
                                        : url;
                 if (keywordUrl != null) {
                     recordSearch(null, "barkeyword");
+                    openUrlAndFinish(searchUrl, "", true);
+                    return;
                 }
-                openUrlAndFinish(searchUrl, "", true);
+
+                if (defaultSearchEngine == null) {
+                    PrefsHelper.getPref("browser.search.defaultenginename", new PrefsHelper.PrefHandlerBase() {
+                        @Override 
+                        public void prefValue(String pref, String value) {
+                            if (!TextUtils.isEmpty(value)) {
+                                defaultSearchEngine = value;
+                            }
+                        }
+                        @Override
+                        public void finish() { 
+                            if (defaultSearchEngine == null) {
+                                openUrlAndFinish(url, "", true);
+                            } else {
+                                openSearchAndFinish(url, defaultSearchEngine);
+                            }
+                        }
+                    });
+                } else {
+                    openSearchAndFinish(url, defaultSearchEngine);
+                }
             }
         });
+    }
+
+    private void openSearchAndFinish(String url, String engine) {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra(URL_KEY, url);
+        resultIntent.putExtra(TARGET_KEY, mTarget);
+        resultIntent.putExtra(SEARCH_KEY, engine);
+        finishWithResult(resultIntent);
     }
 
     @Override

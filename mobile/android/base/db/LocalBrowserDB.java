@@ -183,6 +183,37 @@ public class LocalBrowserDB implements BrowserDB.BrowserDBIface {
         return new LocalDBCursor(c);
     }
 
+    private Cursor filterBaiduSites(ContentResolver cr, String[] projection,
+            int limit, CharSequence urlFilter) {
+        // The combined history/bookmarks selection queries for sites with a url or title containing
+        // the constraint string(s), treating space-separated words as separate constraints
+        String selection = "";
+        String[] selectionArgs = null;
+        selection = DBUtils.concatenateWhere(selection, "(" + Combined.URL + " LIKE ? OR " +
+                                                              Combined.URL + " LIKE ? OR " +
+                                                              Combined.URL + " LIKE ? OR " +
+                                                              Combined.URL + " LIKE ?)");
+        selectionArgs = DBUtils.appendSelectionArgs(selectionArgs,
+          new String[] { "%www.baidu.com/baidu%", "%www.baidu.com/s%", "%m.baidu.com/s%", "%www.google.com.hk/search%" });
+
+        // Our version of frecency is computed by scaling the number of visits by a multiplier
+        // that approximates Gaussian decay, based on how long ago the entry was last visited.
+        // Since we're limited by the math we can do with sqlite, we're calculating this
+        // approximation using the Cauchy distribution: multiplier = 15^2 / (age^2 + 15^2).
+        // Using 15 as our scale parameter, we get a constant 15^2 = 225. Following this math,
+        // frecencyScore = numVisits * max(1, 100 * 225 / (age*age + 225)). (See bug 704977)
+        // We also give bookmarks an extra bonus boost by adding 100 points to their frecency score.
+        final String sortOrder = BrowserContract.getFrecencySortOrder(true, false);
+
+        Cursor c = cr.query(combinedUriWithLimit(limit),
+                            projection,
+                            selection,
+                            selectionArgs,
+                            sortOrder);
+
+        return new LocalDBCursor(c);
+    }
+
     @Override
     public int getCount(ContentResolver cr, String database) {
         int count = 0;
@@ -230,6 +261,19 @@ public class LocalBrowserDB implements BrowserDB.BrowserDBIface {
                                              Combined.BOOKMARK_ID,
                                              Combined.HISTORY_ID },
                               constraint,
+                              limit,
+                              null);
+    }
+
+    @Override
+    public Cursor filterBaidu(ContentResolver cr, int limit) {
+        return filterBaiduSites(cr,
+                              new String[] { Combined._ID,
+                                             Combined.URL,
+                                             Combined.TITLE,
+                                             Combined.DISPLAY,
+                                             Combined.BOOKMARK_ID,
+                                             Combined.HISTORY_ID },
                               limit,
                               null);
     }
@@ -1074,9 +1118,11 @@ public class LocalBrowserDB implements BrowserDB.BrowserDBIface {
 
         private int mDesktopBookmarksIndex = -1;
         private int mReadingListIndex = -1;
+        private int mHistoryIndex = -1;
 
         private boolean mAtDesktopBookmarksPosition = false;
         private boolean mAtReadingListPosition = false;
+        private boolean mAtHistoryPosition = false;
 
         public SpecialFoldersCursorWrapper(Cursor c, boolean showDesktopBookmarks, boolean showReadingList) {
             super(c);

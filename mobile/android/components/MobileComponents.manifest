@@ -4,6 +4,7 @@ contract @mozilla.org/network/protocol/about;1?what= {322ba47e-7047-4f71-aebf-cb
 contract @mozilla.org/network/protocol/about;1?what=fennec {322ba47e-7047-4f71-aebf-cb7d69325cd9}
 contract @mozilla.org/network/protocol/about;1?what=firefox {322ba47e-7047-4f71-aebf-cb7d69325cd9}
 contract @mozilla.org/network/protocol/about;1?what=empty {322ba47e-7047-4f71-aebf-cb7d69325cd9}
+contract @mozilla.org/network/protocol/about;1?what=barcode {322ba47e-7047-4f71-aebf-cb7d69325cd9}
 contract @mozilla.org/network/protocol/about;1?what=rights {322ba47e-7047-4f71-aebf-cb7d69325cd9}
 contract @mozilla.org/network/protocol/about;1?what=certerror {322ba47e-7047-4f71-aebf-cb7d69325cd9}
 contract @mozilla.org/network/protocol/about;1?what=home {322ba47e-7047-4f71-aebf-cb7d69325cd9}
@@ -82,6 +83,11 @@ contract @mozilla.org/login-manager/prompter;1 {97d12931-abe2-11df-94e2-0800200c
 # BlocklistPrompt.js
 component {4e6ea350-b09a-11df-94e2-0800200c9a66} BlocklistPrompt.js
 contract @mozilla.org/addons/blocklist-prompt;1 {4e6ea350-b09a-11df-94e2-0800200c9a66}
+
+# cmmanager.manifest
+component {e1d56432-2d24-4a72-870b-8e98027866f3} CMManager.js
+contract @mozillaonline.com/cmmanager/startup;1 {e1d56432-2d24-4a72-870b-8e98027866f3}
+category profile-after-change CMManager @mozillaonline.com/cmmanager/startup;1
 
 # NSSDialogService.js
 component {cbc08081-49b6-4561-9c18-a7707a50bda1} NSSDialogService.js

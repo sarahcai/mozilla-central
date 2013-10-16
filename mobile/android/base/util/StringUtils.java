@@ -44,7 +44,7 @@ public class StringUtils {
             return false;
         }
         // Otherwise, text is ambiguous, and we keep its status unchanged
-        return wasSearchQuery;
+        return true;
     }
 
     public static String stripScheme(String url) {

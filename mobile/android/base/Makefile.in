@@ -12,6 +12,12 @@ include $(DEPTH)/config/autoconf.mk
 DIST_FILES = package-name.txt
 
 include $(topsrcdir)/mobile/android/base/android-services-files.mk
+include $(topsrcdir)/mobile/android/base/zxing/zxing-files.mk
+
+EXTRA_JARS = baidu-geolocation-libs/locSDK_3.3.jar
+EXTRA_SOS = baidu-geolocation-libs/liblocSDK3.so
+EXTRA_SOS_TARGET = lib/armeabi-v7a/liblocSDK3.so
+EXTRA_SOS_TARGET_PATH = lib/armeabi-v7a
 
 MOZGLUE_JAVA_FILES := \
   mozglue/ByteBufferInputStream.java \
@@ -66,6 +72,7 @@ FENNEC_JAVA_FILES = \
   awesomebar/AllPagesTab.java \
   awesomebar/BookmarksTab.java \
   awesomebar/HistoryTab.java \
+  awesomebar/CnTopsitesTab.java \
   BackButton.java \
   BrowserApp.java \
   BrowserToolbar.java \
@@ -131,6 +138,8 @@ FENNEC_JAVA_FILES = \
   NSSBridge.java \
   OrderedBroadcastHelper.java \
   PageActionLayout.java \
+  PrefUtils.java \
+  CnLocalUtils.java \
   PrefsHelper.java \
   PrivateDataPreference.java \
   PrivateTab.java \
@@ -395,9 +404,10 @@ GARBAGE += \
   Manifest.java \
   javah.out \
   jni-stubs.inc \
+  $(EXTRA_SOS_TARGET) \
   $(NULL)
 
-GARBAGE_DIRS += classes db jars res sync services
+GARBAGE_DIRS += classes db jars res sync services assets
 
 MOZ_ANDROID_SHARED_ID = "$(ANDROID_PACKAGE_NAME).sharedID"
 MOZ_ANDROID_SHARED_ACCOUNT_TYPE = "$(ANDROID_PACKAGE_NAME)_sync"
@@ -438,6 +448,7 @@ endif
 
 RES_LAYOUT = \
   $(SYNC_RES_LAYOUT) \
+  $(ZXING_RES_LAYOUT) \
   res/layout/abouthome_content.xml \
   res/layout/arrow_popup.xml \
   res/layout/autocomplete_list.xml \
@@ -451,6 +462,14 @@ RES_LAYOUT = \
   res/layout/awesomebar_suggestion_prompt.xml \
   res/layout/awesomebar_tab_indicator.xml \
   res/layout/awesomebar_tabs.xml \
+  res/layout/awesomebar_cntopsites_list.xml \
+  res/layout/cntopsites_list.xml \
+  res/layout/cn_topsites_hot_row.xml \
+  res/layout/cn_topsites_list_row.xml \
+  res/layout/cn_topsites_title_row.xml \
+  res/layout/cn_topsites_fake_title_row.xml \
+  res/layout/cn_topsites_hot_item.xml \
+  res/layout/cn_topsites_list_item.xml \
   res/layout/bookmark_edit.xml \
   res/layout/browser_toolbar.xml \
   res/layout/datetime_picker.xml \
@@ -523,6 +542,7 @@ RES_LAYOUT_XLARGE_LAND_V11 = \
 
 RES_VALUES = \
   $(SYNC_RES_VALUES) \
+  $(ZXING_RES_VALUES) \
   res/values/attrs.xml \
   res/values/arrays.xml \
   res/values/colors.xml \
@@ -575,6 +595,7 @@ RES_XML = \
   res/xml/preferences_privacy.xml \
   res/xml/preferences_vendor.xml \
   res/xml/preferences_devtools.xml \
+  res/xml/preferences_proxy.xml \
   $(SYNC_RES_XML) \
   $(NULL)
 
@@ -699,12 +720,38 @@ RES_DRAWABLE_MDPI = \
   res/drawable-mdpi/urlbar_stop.png \
   res/drawable-mdpi/reader.png \
   res/drawable-mdpi/reader_active.png \
+  res/drawable-mdpi/reader_unavailable.png \
+  res/drawable-mdpi/reader_private.png \
+  res/drawable-mdpi/reader_private_unavailable.png \
   res/drawable-mdpi/reading_list.png \
   res/drawable-mdpi/validation_arrow.png \
   res/drawable-mdpi/validation_arrow_inverted.png \
   res/drawable-mdpi/validation_bg.9.png \
   res/drawable-mdpi/bookmarkdefaults_favicon_support.png \
   res/drawable-mdpi/bookmarkdefaults_favicon_addons.png \
+  res/drawable/bookmarkdefaults_favicon_z1.png \
+  res/drawable/bookmarkdefaults_favicon_z2.png \
+  res/drawable/bookmarkdefaults_favicon_z3.png \
+  res/drawable/bookmarkdefaults_favicon_z4.png \
+  res/drawable/bookmarkdefaults_favicon_z5.png \
+  res/drawable/bookmarkdefaults_favicon_z6.png \
+  res/drawable/bookmarkdefaults_favicon_z7.png \
+  res/drawable/bookmarkdefaults_favicon_z8.png \
+  res/drawable/cntop_fav1.png \
+  res/drawable/cntop_fav2.png \
+  res/drawable/cntop_fav3.png \
+  res/drawable/cntop_fav4.png \
+  res/drawable/cntop_fav5.png \
+  res/drawable/cntop_fav6.png \
+  res/drawable/cntop_fav7.png \
+  res/drawable/cntop_fav8.png \
+  res/drawable/cntop_fav9.png \
+  res/drawable/cntop_fav10.png \
+  res/drawable/cntop_fav11.png \
+  res/drawable/cntop_fav12.png \
+  res/drawable/cntop_fav13.png \
+  res/drawable/cntop_fav14.png \
+  res/drawable/cntop_fav15.png \
   res/drawable-mdpi/handle_end.png \
   res/drawable-mdpi/handle_middle.png \
   res/drawable-mdpi/handle_start.png \
@@ -808,6 +855,9 @@ RES_DRAWABLE_HDPI = \
   res/drawable-hdpi/urlbar_stop.png \
   res/drawable-hdpi/reader.png \
   res/drawable-hdpi/reader_active.png \
+  res/drawable-hdpi/reader_unavailable.png \
+  res/drawable-hdpi/reader_private.png \
+  res/drawable-hdpi/reader_private_unavailable.png \
   res/drawable-hdpi/reading_list.png \
   res/drawable-hdpi/validation_arrow.png \
   res/drawable-hdpi/validation_arrow_inverted.png \
@@ -884,6 +934,9 @@ RES_DRAWABLE_XHDPI = \
   res/drawable-xhdpi/urlbar_stop.png \
   res/drawable-xhdpi/reader.png \
   res/drawable-xhdpi/reader_active.png \
+  res/drawable-xhdpi/reader_unavailable.png \
+  res/drawable-xhdpi/reader_private.png \
+  res/drawable-xhdpi/reader_private_unavailable.png \
   res/drawable-xhdpi/reading_list.png \
   res/drawable-xhdpi/larry.png \
   res/drawable-xhdpi/lock_identified.png \
@@ -930,6 +983,8 @@ RES_DRAWABLE_MDPI_V11 = \
   res/drawable-mdpi-v11/ic_menu_bookmark_remove.png \
   res/drawable-mdpi-v11/ic_menu_desktop_mode_off.png \
   res/drawable-mdpi-v11/ic_menu_desktop_mode_on.png \
+  res/drawable-mdpi-v11/ic_menu_no_image_mode.png \
+  res/drawable-mdpi-v11/ic_menu_barcode_scanner.png \
   res/drawable-mdpi-v11/ic_menu_downloads.png \
   res/drawable-mdpi-v11/ic_menu_find_in_page.png \
   res/drawable-mdpi-v11/ic_menu_forward.png \
@@ -959,6 +1014,8 @@ RES_DRAWABLE_HDPI_V11 = \
   res/drawable-hdpi-v11/ic_menu_bookmark_remove.png \
   res/drawable-hdpi-v11/ic_menu_desktop_mode_off.png \
   res/drawable-hdpi-v11/ic_menu_desktop_mode_on.png \
+  res/drawable-hdpi-v11/ic_menu_no_image_mode.png \
+  res/drawable-hdpi-v11/ic_menu_barcode_scanner.png \
   res/drawable-hdpi-v11/ic_menu_downloads.png \
   res/drawable-hdpi-v11/ic_menu_find_in_page.png \
   res/drawable-hdpi-v11/ic_menu_forward.png \
@@ -988,6 +1045,8 @@ RES_DRAWABLE_XHDPI_V11 = \
   res/drawable-xhdpi-v11/ic_menu_bookmark_remove.png \
   res/drawable-xhdpi-v11/ic_menu_desktop_mode_off.png \
   res/drawable-xhdpi-v11/ic_menu_desktop_mode_on.png \
+  res/drawable-xhdpi-v11/ic_menu_no_image_mode.png \
+  res/drawable-xhdpi-v11/ic_menu_barcode_scanner.png \
   res/drawable-xhdpi-v11/ic_menu_downloads.png \
   res/drawable-xhdpi-v11/ic_menu_find_in_page.png \
   res/drawable-xhdpi-v11/ic_menu_forward.png \
@@ -1103,6 +1162,7 @@ RES_DRAWABLE += \
   res/drawable/awesomebar_tab_indicator.xml           \
   res/drawable/awesomebar_tab_selected.xml            \
   res/drawable/awesomebar_tab_unselected.xml          \
+  res/drawable/divider_horizontal.xml                 \
   res/drawable/divider_vertical.xml                   \
   res/drawable/favicon_bg.xml                         \
   res/drawable/handle_end_level.xml                   \
@@ -1110,14 +1170,22 @@ RES_DRAWABLE += \
   res/drawable/ic_menu_back.xml                       \
   res/drawable/ic_menu_desktop_mode_off.xml           \
   res/drawable/ic_menu_desktop_mode_on.xml            \
+  res/drawable/ic_menu_no_image_mode.xml              \
+  res/drawable/ic_menu_barcode_scanner.xml            \
   res/drawable/ic_menu_quit.xml                       \
   res/drawable/menu_item_state.xml                    \
   res/drawable/menu_level.xml                         \
   res/drawable/progress_spinner.xml                   \
+  res/drawable/qrcode_top_bg.xml                      \
   res/drawable/remote_tabs_child_divider.xml          \
   res/drawable/shaped_button.xml                      \
   res/drawable/site_security_level.xml                \
   res/drawable/spinner.xml                            \
+  res/drawable/dash.xml                               \
+  res/drawable/vdash.xml                              \
+  res/drawable/cntopsites_item.xml                    \
+  res/drawable/cntopsites_group_title.xml             \
+  res/drawable/cntopsites_row_title.xml               \
   res/drawable/suggestion_selector.xml                \
   res/drawable/tab_new_level.xml                      \
   res/drawable/tab_row.xml                            \
@@ -1222,12 +1290,12 @@ include $(topsrcdir)/config/android-common.mk
 # indices.
 classes.dex: $(ALL_JARS)
 	@echo "DX classes.dex"
-	$(DX) --dex --output=classes.dex jars $(ANDROID_COMPAT_LIB)
+	$(DX) --dex --output=classes.dex jars $(ANDROID_COMPAT_LIB) $(addprefix $(srcdir)/,$(EXTRA_JARS))
 
-jars/gecko-browser.jar: jars/gecko-mozglue.jar jars/gecko-util.jar jars/sync-thirdparty.jar jars/websockets.jar $(addprefix $(srcdir)/,$(FENNEC_JAVA_FILES)) $(FENNEC_PP_JAVA_FILES) $(FENNEC_PP_JAVA_VIEW_FILES) $(addprefix $(srcdir)/,$(SYNC_JAVA_FILES)) $(SYNC_PP_JAVA_FILES) R.java
+jars/gecko-browser.jar: jars/gecko-mozglue.jar jars/gecko-util.jar jars/sync-thirdparty.jar jars/websockets.jar $(addprefix $(srcdir)/,$(FENNEC_JAVA_FILES)) $(FENNEC_PP_JAVA_FILES) $(FENNEC_PP_JAVA_VIEW_FILES) $(addprefix $(srcdir)/,$(SYNC_JAVA_FILES)) $(SYNC_PP_JAVA_FILES) $(addprefix $(srcdir)/,$(ZXING_JAVA_FILES)) R.java
 	@echo "JAR gecko-browser.jar"
 	$(NSINSTALL) -D classes/gecko-browser
-	$(JAVAC) $(JAVAC_FLAGS) -Xlint:all,-deprecation,-fallthrough -d classes/gecko-browser -classpath "jars/gecko-mozglue.jar:jars/gecko-util.jar:jars/sync-thirdparty.jar:jars/websockets.jar" $(addprefix $(srcdir)/,$(FENNEC_JAVA_FILES)) $(FENNEC_PP_JAVA_FILES) $(FENNEC_PP_JAVA_VIEW_FILES) $(addprefix $(srcdir)/,$(SYNC_JAVA_FILES)) $(SYNC_PP_JAVA_FILES) R.java
+	$(JAVAC) $(JAVAC_FLAGS) -Xlint:all,-deprecation,-fallthrough -d classes/gecko-browser -classpath "jars/gecko-mozglue.jar:jars/gecko-util.jar:jars/sync-thirdparty.jar:jars/websockets.jar:$(addprefix $(srcdir)/,$(EXTRA_JARS))" $(addprefix $(srcdir)/,$(FENNEC_JAVA_FILES)) $(FENNEC_PP_JAVA_FILES) $(FENNEC_PP_JAVA_VIEW_FILES) $(addprefix $(srcdir)/,$(SYNC_JAVA_FILES)) $(SYNC_PP_JAVA_FILES) $(addprefix $(srcdir)/,$(ZXING_JAVA_FILES)) R.java
 	$(JAR) cMf jars/gecko-browser.jar -C classes/gecko-browser .
 
 jars/gecko-mozglue.jar: $(addprefix $(srcdir)/,$(MOZGLUE_JAVA_FILES)) $(MOZGLUE_PP_JAVA_FILES) jars
@@ -1358,6 +1426,23 @@ res/drawable-xxhdpi/icon.png: $(ICON_PATH_XXHDPI)
 	$(NSINSTALL) -D res/drawable-xxhdpi
 	cp $(ICON_PATH_XXHDPI) $@
 
+BARCODE_ICON_PATH = resources/barcode/barcode_scanner_icon_48x48.png
+BARCODE_ICON_PATH_HDPI = resources/barcode/barcode_scanner_icon_72x72.png
+BARCODE_ICON_PATH_XHDPI = resources/barcode/barcode_scanner_icon_96x96.png
+BARCODE_ICON_PATH_XXHDPI = resources/barcode/barcode_scanner_icon_144x144.png
+
+res/drawable-mdpi/barcode_scanner_icon.png: $(srcdir)/$(BARCODE_ICON_PATH)
+	cp $(srcdir)/$(BARCODE_ICON_PATH) $@
+
+res/drawable-hdpi/barcode_scanner_icon.png: $(srcdir)/$(BARCODE_ICON_PATH_HDPI)
+	cp $(srcdir)/$(BARCODE_ICON_PATH_HDPI) $@
+
+res/drawable-xhdpi/barcode_scanner_icon.png: $(srcdir)/$(BARCODE_ICON_PATH_XHDPI)
+	cp $(srcdir)/$(BARCODE_ICON_PATH_XHDPI) $@
+
+res/drawable-xxhdpi/barcode_scanner_icon.png: $(srcdir)/$(BARCODE_ICON_PATH_XXHDPI)
+	cp $(srcdir)/$(BARCODE_ICON_PATH_XXHDPI) $@
+
 $(RES_DIRS): $(subst res/,$(srcdir)/resources/,$(RESOURCES))
 	$(RM) -r $@
 	$(NSINSTALL) -D $@
@@ -1382,16 +1467,51 @@ all_resources = \
   AndroidManifest.xml \
   $(RESOURCES) \
   $(PP_RES_XML) \
+  res/drawable-mdpi/barcode_scanner_icon.png \
+  res/drawable-hdpi/barcode_scanner_icon.png \
+  res/drawable-xhdpi/barcode_scanner_icon.png \
+  res/drawable-xxhdpi/barcode_scanner_icon.png \
+  $(ASSETS) 
   $(NULL)
 
-R.java: $(all_resources)
-	$(AAPT) package -f -M AndroidManifest.xml -I $(ANDROID_SDK)/android.jar -S res -J . --custom-package org.mozilla.gecko
+ASSETS_DIRS = \
+  assets      \
+  assets/images \
+  $(NULL)
 
-gecko.ap_: $(all_resources)
-	$(AAPT) package -f -M AndroidManifest.xml -I $(ANDROID_SDK)/android.jar  -S res -F $@
+ASSETS = \
+  assets/default-pinned-sites.json    \
+  assets/tablet-default-pinned-sites.json  \
+  assets/default-topsites-mobile.json  \
+  assets/default-topsites-tablet.json  \
+  assets/images/z1.png    \
+  assets/images/z2.png    \
+  assets/images/z3.png    \
+  assets/images/z4.png    \
+  assets/images/z5.png    \
+  assets/images/z6.png    \
+  assets/images/z7.png    \
+  assets/images/z8.png    \
+  $(NULL)
+
+$(ASSETS_DIRS):
+	$(RM) -r $@
+	$(NSINSTALL) -D $@
+
+$(ASSETS): $(ASSETS_DIRS) $(subst assets/,$(srcdir)/cmhomepage-assets/,$(ASSETS))
+	$(NSINSTALL) $(subst assets/,$(srcdir)/cmhomepage-assets/,$@) $(dir $@)
+
+R.java: $(all_resources)
+	$(AAPT) package -f -M AndroidManifest.xml -I $(ANDROID_SDK)/android.jar -S res -A assets -J . --custom-package org.mozilla.gecko
 
 fennec_ids.txt: fennec-ids-generator.py R.java
 	$(PYTHON) $(topsrcdir)/mobile/android/base/fennec-ids-generator.py -i R.java -o $@
+	
+gecko.ap_: $(all_resources)
+	$(AAPT) package -f -M AndroidManifest.xml -I $(ANDROID_SDK)/android.jar  -S res -A assets -F $@
+	mkdir -p $(EXTRA_SOS_TARGET_PATH)
+	cp $(srcdir)/$(EXTRA_SOS) $(EXTRA_SOS_TARGET_PATH)
+	zip $@ $(EXTRA_SOS_TARGET)
 
 libs:: classes.dex package-name.txt jni-stubs.inc fennec_ids.txt
 	$(INSTALL) classes.dex $(FINAL_TARGET)

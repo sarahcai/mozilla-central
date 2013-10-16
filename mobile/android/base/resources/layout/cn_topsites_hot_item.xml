@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:layout_weight="100"
+              android:background="@drawable/cntopsites_item"
+              android:orientation="horizontal"
+              android:gravity="center">              
+        
+        <ImageView android:id="@+id/favicon"
+               android:layout_marginRight="3dip"
+               android:gravity="center"
+               android:layout_width="16dip"
+               android:layout_height="16dip"/>
+
+        <TextView android:id="@+id/title"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="#0355A6"
+                  android:textSize="16sp"
+                  android:gravity="center"/>
+    
+</LinearLayout>

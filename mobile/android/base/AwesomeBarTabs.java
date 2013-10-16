@@ -142,6 +142,7 @@ public class AwesomeBarTabs extends TabHost
 
         mTabs = new AwesomeBarTab[] {
             new AllPagesTab(mContext),
+            new CnTopsitesTab(mContext),
             new BookmarksTab(mContext),
             new HistoryTab(mContext)
         };
@@ -290,6 +291,10 @@ public class AwesomeBarTabs extends TabHost
         for (AwesomeBarTab tab : mTabs) {
             tab.destroy();
         }
+    }
+
+    public CnTopsitesTab getCnTopsitesTab() {
+        return (CnTopsitesTab)getAwesomeBarTabForTag("cntopsites");
     }
 
     public AllPagesTab getAllPagesTab() {

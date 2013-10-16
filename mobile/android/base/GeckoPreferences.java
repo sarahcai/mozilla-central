@@ -71,6 +71,9 @@ public class GeckoPreferences
     private static String PREFS_TELEMETRY_ENABLED = "datareporting.telemetry.enabled";
     private static String PREFS_CRASHREPORTER_ENABLED = "datareporting.crashreporter.submitEnabled";
     private static String PREFS_MENU_CHAR_ENCODING = "browser.menu.showCharacterEncoding";
+    private static String PREFS_PROXY_TYPE = "network.proxy.type";
+    private static String PREFS_HTTP_PROXY = "network.proxy.http";
+    private static String PREFS_HTTP_PORT = "network.proxy.http_port";
     private static String PREFS_MP_ENABLED = "privacy.masterpassword.enabled";
     private static String PREFS_UPDATER_AUTODOWNLOAD = "app.update.autodownload";
     private static String PREFS_GEO_REPORTING = "app.geo.reportdata";
@@ -495,7 +498,16 @@ public class GeckoPreferences
 
         // Send Gecko-side pref changes to Gecko
         if (!TextUtils.isEmpty(prefName) && !prefName.startsWith(NON_PREF_PREFIX)) {
-            PrefsHelper.setPref(prefName, newValue);
+            if (PREFS_HTTP_PORT.equals(prefName)) {
+                try {
+                    PrefsHelper.setPref(prefName, Integer.parseInt(newValue.toString()));
+                } catch (Exception e) {   
+                    PrefsHelper.setPref(prefName, 0);
+                    newValue = "0";
+                }
+            } else {
+                PrefsHelper.setPref(prefName, newValue);
+            }
         }
 
         if (preference instanceof ListPreference) {
@@ -503,6 +515,8 @@ public class GeckoPreferences
             int newIndex = ((ListPreference) preference).findIndexOfValue((String) newValue);
             CharSequence newEntry = ((ListPreference) preference).getEntries()[newIndex];
             ((ListPreference) preference).setSummary(newEntry);
+        } else if (preference instanceof EditTextPreference) {
+            ((EditTextPreference) preference).setSummary(newValue.toString());
         } else if (preference instanceof LinkPreference) {
             setResult(RESULT_CODE_EXIT_SETTINGS);
             finish();
@@ -724,6 +738,7 @@ public class GeckoPreferences
                         @Override
                         public void run() {
                             ((EditTextPreference) pref).setText(value);
+                            ((EditTextPreference) pref).setSummary(value);
                         }
                     });
                 } else if (pref instanceof ListPreference) {
@@ -765,7 +780,15 @@ public class GeckoPreferences
                             prefSetter.setBooleanPref(pref, value == 1);
                         }
                     });
-                } else {
+                } else if (pref instanceof EditTextPreference) {
+                    ThreadUtils.postToUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((EditTextPreference) pref).setText(String.valueOf(value));
+                            ((EditTextPreference) pref).setSummary(String.valueOf(value));
+                        }
+                    });
+                } else {                
                     Log.w(LOGTAG, "Unhandled int value for pref [" + pref + "]");
                 }
             }
@@ -773,6 +796,24 @@ public class GeckoPreferences
             @Override
             public boolean isObserver() {
                 return true;
+            }
+            
+            private void setProxySettingsEnabled(boolean enabled) {
+                screen.findPreference(PREFS_HTTP_PROXY).setEnabled(enabled);
+                screen.findPreference(PREFS_HTTP_PORT).setEnabled(enabled);
+            }
+            
+            private void checkProxySettingsEnabled() {
+                try {
+                    ListPreference pref = (ListPreference) screen.findPreference(PREFS_PROXY_TYPE);
+                    String type = pref.getValue();
+                    // manual proxy
+                    if (!type.equals("1")) {
+                        setProxySettingsEnabled(false);
+                    }
+                } catch (Exception e) {
+                    Log.d("pref_menu_error", e.toString());
+                }
             }
 
             @Override
@@ -782,6 +823,7 @@ public class GeckoPreferences
                     @Override
                     public void run() {
                         screen.setEnabled(true);
+                        checkProxySettingsEnabled();
                     }
                 });
             }

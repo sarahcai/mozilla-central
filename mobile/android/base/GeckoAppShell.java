@@ -22,6 +22,7 @@ import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.Intent.ShortcutIconResource;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
@@ -104,6 +105,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 
 public class GeckoAppShell
 {
@@ -470,42 +474,30 @@ public class GeckoAppShell
         ThreadUtils.postToUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    LocationManager lm = getLocationManager(getContext());
-                    if (lm == null) {
-                        return;
-                    }
+                    // Baidu location client
+                    LocationClient mLocClient = GeckoApp.getLocationClient();
+                    LocationClientOption mLocClientOption = new LocationClientOption();
 
                     if (enable) {
-                        Location lastKnownLocation = getLastKnownLocation(lm);
-                        if (lastKnownLocation != null) {
-                            getGeckoInterface().getLocationListener().onLocationChanged(lastKnownLocation);
-                        }
+                        // Set baidu geolocation options.
+                        mLocClientOption.setOpenGps(true);
+                        mLocClientOption.setAddrType("all");
+                        mLocClientOption.setCoorType("gcj02");
+                        mLocClientOption.setPriority(LocationClientOption.GpsFirst);
+                        mLocClientOption.setScanSpan(5000);
+                        mLocClientOption.disableCache(true);
 
-                        Criteria criteria = new Criteria();
-                        criteria.setSpeedRequired(false);
-                        criteria.setBearingRequired(false);
-                        criteria.setAltitudeRequired(false);
-                        if (mLocationHighAccuracy) {
-                            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-                            criteria.setCostAllowed(true);
-                            criteria.setPowerRequirement(Criteria.POWER_HIGH);
+                        // Try to start the location service.
+                        mLocClient.setLocOption(mLocClientOption);
+                        mLocClient.start();
+                        if (mLocClient != null && mLocClient.isStarted()) {
+                            mLocClient.requestLocation();
                         } else {
-                            criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-                            criteria.setCostAllowed(false);
-                            criteria.setPowerRequirement(Criteria.POWER_LOW);
+                            Log.d(LOGTAG, "Baidu geolocation can not start.");
                         }
-
-                        String provider = lm.getBestProvider(criteria, true);
-                        if (provider == null)
-                            return;
-
-                        Looper l = Looper.getMainLooper();
-                        lm.requestLocationUpdates(provider, 100, (float).5, getGeckoInterface().getLocationListener(), l);
-                    } else {
-                        lm.removeUpdates(getGeckoInterface().getLocationListener());
                     }
                 }
-            });
+        });
     }
 
     private static LocationManager getLocationManager(Context context) {
@@ -658,11 +650,11 @@ public class GeckoAppShell
     }
 
     public static void postInstallWebApp(String aTitle, String aURI, String aOrigin, String aIconURL, String aOriginalOrigin) {
-    	WebAppAllocator allocator = WebAppAllocator.getInstance(getContext());
-		int index = allocator.getIndexForApp(aOriginalOrigin);
-    	assert index != -1 && aIconURL != null;
-    	allocator.updateAppAllocation(aOrigin, index, BitmapUtils.getBitmapFromDataURI(aIconURL));
-    	createShortcut(aTitle, aURI, aOrigin, aIconURL, "webapp");
+        WebAppAllocator allocator = WebAppAllocator.getInstance(getContext());
+        int index = allocator.getIndexForApp(aOriginalOrigin);
+        assert index != -1 && aIconURL != null;
+        allocator.updateAppAllocation(aOrigin, index, BitmapUtils.getBitmapFromDataURI(aIconURL));
+        createShortcut(aTitle, aURI, aOrigin, aIconURL, "webapp");
     }
 
     public static Intent getWebAppIntent(String aURI, String aOrigin, String aTitle, Bitmap aIcon) {
@@ -724,14 +716,19 @@ public class GeckoAppShell
                     shortcutIntent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
                                                 AppConstants.BROWSER_INTENT_CLASS);
                 }
-        
+
                 Intent intent = new Intent();
                 intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
                 if (aTitle != null)
                     intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, aTitle);
                 else
                     intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, aURI);
-                intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, getLauncherIcon(aIcon, aType));
+                if (aTitle.equals(getContext().getResources().getString(R.string.barcode_shortcut))) {
+                    ShortcutIconResource iconRes = Intent.ShortcutIconResource.fromContext(getContext(), R.drawable.barcode_scanner_icon);   
+                    intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconRes);  
+                } else {
+                    intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, getLauncherIcon(aIcon, aType));
+                }
 
                 // Do not allow duplicate items
                 intent.putExtra("duplicate", false);
@@ -764,7 +761,7 @@ public class GeckoAppShell
                                                 AppConstants.BROWSER_INTENT_CLASS);
                     shortcutIntent.setData(Uri.parse(aURI));
                 }
-        
+
                 Intent intent = new Intent();
                 intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
                 if (aTitle != null)
@@ -1169,7 +1166,7 @@ public class GeckoAppShell
         if (action.equalsIgnoreCase(Intent.ACTION_SEND)) {
             Intent shareIntent = getShareIntent(context, targetURI, mimeType, title);
             return Intent.createChooser(shareIntent,
-                                        context.getResources().getString(R.string.share_title)); 
+                                        context.getResources().getString(R.string.share_title));
         }
 
         final Uri uri = normalizeUriScheme(Uri.parse(targetURI));
@@ -1557,7 +1554,7 @@ public class GeckoAppShell
                 return true;
             }
         };
-            
+
         EnumerateGeckoProcesses(visitor);
     }
 
@@ -1572,9 +1569,9 @@ public class GeckoAppShell
                     return false;
                 }
                 return true;
-            }            
+            }
         }
-        GeckoPidCallback visitor = new GeckoPidCallback();            
+        GeckoPidCallback visitor = new GeckoPidCallback();
         EnumerateGeckoProcesses(visitor);
         return visitor.otherPidExist;
     }
@@ -1597,7 +1594,7 @@ public class GeckoAppShell
 
             // figure out the column offsets.  We only care about the pid and user fields
             StringTokenizer st = new StringTokenizer(headerOutput);
-            
+
             int tokenSoFar = 0;
             while (st.hasMoreTokens()) {
                 String next = st.nextToken();
@@ -2358,7 +2355,7 @@ public class GeckoAppShell
       for (byte c='0'; c<='9'; c++) map1[i++] = c;
       map1[i++] = '+'; map1[i++] = '/';
       map1_urlsafe = map1.clone();
-      map1_urlsafe[62] = '-'; map1_urlsafe[63] = '_'; 
+      map1_urlsafe[62] = '-'; map1_urlsafe[63] = '_';
     }
 
     // Mapping table from Base64 characters to 6-bit nibbles.
@@ -2400,7 +2397,7 @@ public class GeckoAppShell
             out[op] = op < oDataLen ? toMap[o2] : EQUALS_ASCII; op++;
             out[op] = op < oDataLen ? toMap[o3] : EQUALS_ASCII; op++;
         }
-        return out; 
+        return out;
     }
 
     /**
@@ -2443,7 +2440,7 @@ public class GeckoAppShell
             out[op++] = (byte)o0;
             if (op<oLen) out[op++] = (byte)o1;
             if (op<oLen) out[op++] = (byte)o2; }
-        return out; 
+        return out;
     }
 
     public static byte[] decodeBase64(String s, int flags) {

@@ -5,9 +5,14 @@
 
 package org.mozilla.gecko.widget;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.mozilla.apache.commons.codec.digest.DigestUtils;
 import org.mozilla.gecko.AwesomeBar;
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.ThumbnailHelper;
@@ -24,8 +29,10 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.drawable.Drawable;
@@ -49,6 +56,12 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +87,9 @@ public class TopSitesView extends GridView {
     private static Drawable sPinDrawable = null;
     private int mThumbnailBackground;
     private Map<String, Bitmap> mPendingThumbnails;
+    
+    private DefaultPinnedBoomarks mDefaultPinnedBoomarks;
+    private String mChannelid = "firefox.mobile";
 
     public TopSitesView(Context context) {
         super(context);
@@ -91,6 +107,67 @@ public class TopSitesView extends GridView {
         init();
     }
 
+    private static void sendGridTrack (String fullurl) {
+        try {
+            InputStream is = null;
+            URL Turl = new URL(fullurl);
+            HttpURLConnection conn = (HttpURLConnection) Turl.openConnection();
+            conn.setConnectTimeout(3000);
+            conn.setReadTimeout(5000);
+            conn.setDoInput(true);
+            conn.setUseCaches(false);
+            conn.connect();
+            if (conn.getResponseCode() == 200) {
+                is = conn.getInputStream();
+            }
+        } catch (IOException e) {
+                Log.d("TRACKING", e.toString());
+        }
+    }
+
+    private void trackGrid(int position, String spec) {
+        String pos = Integer.toString(position + 1);
+        String fullurl = "http://m.g-fox.cn/cfhome.gif?t=quickdial&a=click&d=" + pos + "&u=";
+        if (mDefaultPinnedBoomarks.checkDefaultBookmarks(spec)) {
+               fullurl += DigestUtils.md5Hex(spec);
+        }
+        fullurl += "&cid=" + mChannelid + "&r=" + Math.random(); 
+        Log.d("turl", fullurl);
+        final String turl = fullurl;
+
+        (new UiAsyncTask<Void, Void, Void>(ThreadUtils.getBackgroundHandler()) {
+            @Override
+            public Void doInBackground(Void... params) {
+                sendGridTrack(turl);
+                return null;
+            }
+
+            @Override
+            public void onPostExecute(Void v) {
+            }
+
+        }).execute();
+
+    }
+
+    private void doTrackGrid(int position, String spec) {
+        final int aPosition = position;
+        final String aSpec = spec;
+        PrefsHelper.getPref("extensions.cmmanager.channelid", new PrefsHelper.PrefHandlerBase() {
+            @Override 
+            public void prefValue(String pref, String value) {
+                if (!TextUtils.isEmpty(value)) {
+                    mChannelid = value;
+                }
+            }
+            @Override
+            public void finish() { 
+                trackGrid(aPosition, aSpec);
+            }
+        });
+
+    }
+
     private void init() {
         mThumbnailBackground = mContext.getResources().getColor(R.color.abouthome_thumbnail_bg);
         setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -104,6 +181,8 @@ public class TopSitesView extends GridView {
                     editSite(spec, position);
                     return;
                 }
+
+                doTrackGrid(position, spec);
 
                 if (mUriLoadListener != null) {
                     // Decode "user-entered" URLs before loading them.
@@ -203,7 +282,9 @@ public class TopSitesView extends GridView {
             @Override
             public void run() {
                 final ContentResolver resolver = mContext.getContentResolver();
-
+                if (mDefaultPinnedBoomarks == null) {
+                    mDefaultPinnedBoomarks = new DefaultPinnedBoomarks();
+                }
                 // Swap in the new cursor.
                 final Cursor oldCursor = (mTopSitesAdapter != null) ? mTopSitesAdapter.getCursor() : null;
                 final Cursor newCursor = BrowserDB.getTopSites(resolver, mNumberOfTopSites);
@@ -269,6 +350,13 @@ public class TopSitesView extends GridView {
 
     private void displayThumbnail(View view, Bitmap thumbnail) {
         ImageView thumbnailView = (ImageView) view.findViewById(R.id.thumbnail);
+
+        TopSitesViewHolder holder = (TopSitesViewHolder) view.getTag();
+        String url = holder.getUrl();
+        Bitmap defaultThumbnail = mDefaultPinnedBoomarks.getDefaultThumbnail(url);
+        if (defaultThumbnail != null) {
+            thumbnail = defaultThumbnail;
+        }
 
         if (thumbnail == null) {
             thumbnailView.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -712,5 +800,87 @@ public class TopSitesView extends GridView {
         });
 
         mActivity.startActivityForResult(intent, requestCode);
+    }
+
+    private class DefaultPinnedBoomarks {
+        private static final String ASSET_PREFIX = "file:///android_asset/";
+
+        private final HashMap<String, String> mDefaultThumbnailMap;
+
+        public DefaultPinnedBoomarks() {
+            JSONArray defaultData = loadDefaultData();
+            mDefaultThumbnailMap = new HashMap<String, String>();
+            int defaultDataLen = defaultData.length();
+            for (int i = 0; i < defaultDataLen; i++) {
+                try {
+                    JSONObject item = defaultData.getJSONObject(i);
+                    String url = item.getString("url");
+                    String image = item.getString("image");
+                    mDefaultThumbnailMap.put(url, image);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        public Boolean checkDefaultBookmarks(String url) {
+            String imageUrl = mDefaultThumbnailMap.get(url);
+            if (imageUrl != null && imageUrl.startsWith(ASSET_PREFIX)) {
+                return true;
+            }
+            return false;
+        }
+
+        public Bitmap getDefaultThumbnail(String url) {
+            String imageUrl = mDefaultThumbnailMap.get(url);
+            if (imageUrl != null && imageUrl.startsWith(ASSET_PREFIX)) {
+                return getBitmapFromAsset(imageUrl.substring(ASSET_PREFIX.length()));
+            }
+            return null;
+        }
+
+        private JSONArray loadDefaultData() {
+            JSONArray result = null;
+            try {
+                AssetManager am = getContext().getAssets();
+                InputStream stream;
+                if (GeckoAppShell.isTablet()) {
+                    stream = am.open("tablet-default-pinned-sites.json");
+                } else {
+                    stream = am.open("default-pinned-sites.json");
+                }
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(stream));
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    sb.append('\n');
+                }
+                stream.close();
+                result = new JSONArray(sb.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (result == null) {
+                result = new JSONArray();
+            }
+            return result;
+        }
+
+        private Bitmap getBitmapFromAsset(String fileName) {
+            Bitmap bmp = null;
+            try {
+                AssetManager am = getContext().getAssets();
+                InputStream stream = am.open(fileName);
+                bmp = BitmapFactory.decodeStream(stream);
+                stream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return bmp;
+        }
     }
 }

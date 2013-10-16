@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright (C) 2008 ZXing authors
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="fill_parent"
+             android:layout_height="fill_parent">
+
+  <SurfaceView android:id="@+id/preview_view"
+               android:layout_width="fill_parent"
+               android:layout_height="fill_parent"/>
+
+  <org.mozilla.gecko.zxing.client.android.ViewfinderView
+      android:id="@+id/viewfinder_view"
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent"/>
+
+  <ProgressBar
+      android:id="@+id/progress_bar_view"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center">
+  </ProgressBar>
+
+  <LinearLayout android:id="@+id/result_view"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="@color/background_normal"
+                android:visibility="gone"
+                android:baselineAligned="false">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="150dip"
+        android:minHeight="130dip"
+        android:layout_margin="5dip"
+        android:padding="10dip"
+        android:gravity="left"
+        android:background="@drawable/qrcode_top_bg">    
+
+      <ImageView 
+          android:id="@+id/barcode_image_view"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_margin="10dip"
+          android:maxWidth="160dip"
+          android:maxHeight="160dip"
+          android:layout_gravity="center_vertical"
+          android:layout_marginTop="20dip"
+          android:adjustViewBounds="true" />
+
+      <ScrollView
+          android:layout_width="wrap_content"
+          android:layout_height="fill_parent"
+          android:gravity="center_vertical"
+          android:layout_gravity="center_vertical"
+          android:fadeScrollbars="false">
+
+        <LinearLayout
+          android:layout_width="wrap_content"
+          android:layout_height="fill_parent"
+          android:layout_marginLeft="10dip"
+          android:layout_gravity="center_vertical"
+          android:gravity="center_vertical"
+          android:orientation="vertical">
+
+          <TextView android:id="@+id/contents_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:textColor="#222222"
+                    android:textColorLink="#222222"
+                    android:textSize="16sp"
+                    android:paddingLeft="12dip" />
+
+        </LinearLayout>
+
+      </ScrollView>
+
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/result_button_view"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="vertical"
+                  android:gravity="center"
+                  android:layout_marginTop="30dip"
+                  android:layout_marginLeft="5dip"
+                  android:layout_marginRight="5dip"
+                  android:divider="@drawable/divider_horizontal"
+                  android:showDividers="middle"
+                  android:background="@drawable/qrcode_top_bg">
+
+      <TextView android:layout_width="fill_parent"
+                android:layout_height="@dimen/menu_item_row_height"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:background="@drawable/action_bar_button"
+                android:gravity="center_vertical"
+                android:textColor="#222222"
+                android:textColorLink="#222222"
+                android:textSize="16sp"
+                android:paddingLeft="12dip"
+                android:visibility="gone"/>
+      
+      
+      <TextView android:layout_width="fill_parent"
+                android:layout_height="@dimen/menu_item_row_height"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:background="@drawable/action_bar_button"
+                android:gravity="center_vertical"
+                android:textColor="#222222"
+                android:textColorLink="#222222"
+                android:textSize="16sp"
+                android:paddingLeft="12dip"
+                android:visibility="gone"/>
+
+    </LinearLayout>
+
+  </LinearLayout>
+  
+  <LinearLayout android:id="@+id/express_select_view"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="@color/background_normal"
+                android:visibility="gone"
+                android:baselineAligned="false">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="150dip"
+        android:minHeight="130dip"
+        android:layout_margin="5dip"
+        android:padding="10dip"
+        android:gravity="left"
+        android:background="@drawable/qrcode_top_bg">    
+
+      <ImageView 
+          android:id="@+id/express_image_view"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_margin="10dip"
+          android:maxWidth="160dip"
+          android:maxHeight="160dip"
+          android:layout_gravity="center_vertical"
+          android:layout_marginTop="20dip"
+          android:adjustViewBounds="true" />
+
+      <ScrollView
+          android:layout_width="wrap_content"
+          android:layout_height="fill_parent"
+          android:gravity="center_vertical"
+          android:layout_gravity="center_vertical"
+          android:fadeScrollbars="false">
+
+        <LinearLayout
+          android:layout_width="wrap_content"
+          android:layout_height="fill_parent"
+          android:layout_marginLeft="10dip"
+          android:layout_gravity="center_vertical"
+          android:gravity="center_vertical"
+          android:orientation="vertical">
+
+          <TextView android:id="@+id/express_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:textColor="#222222"
+                    android:textColorLink="#222222"
+                    android:textSize="16sp"
+                    android:paddingLeft="12dip" />
+
+        </LinearLayout>
+
+      </ScrollView>
+
+    </LinearLayout>
+
+    <GridView android:id="@+id/express_company_list"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:numColumns="3"
+              android:textColor="#222222"
+              android:textColorLink="#222222"
+              android:textSize="16sp"
+              android:gravity="center"            
+    />
+    
+
+  </LinearLayout>
+
+  <TextView android:id="@+id/status_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:background="@color/transparent"
+            android:text="@string/msg_default_status"
+            android:textColor="@color/status_text"/>
+
+</FrameLayout>

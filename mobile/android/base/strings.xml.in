@@ -8,6 +8,7 @@
 #includesubst @BRANDPATH@
 #includesubst @STRINGSPATH@
 #includesubst @SYNCSTRINGSPATH@
+#includesubst @ZXINGSTRINGSPATH@
 
 <!-- C-style format strings. -->
 <!ENTITY formatS "&#037;s">
@@ -21,6 +22,8 @@
   <string name="no_space_to_start_error">&no_space_to_start_error;</string>
   <string name="error_loading_file">&error_loading_file;</string>
 
+  <string name="awesomebar_cntopsites_title">&awesomebar_cntopsites_title;</string>
+  <string name="awesomebar_baidu_title">&awesomebar_baidu_title;</string>
   <string name="awesomebar_all_pages_title">&awesomebar_all_pages_title;</string>
   <string name="awesomebar_bookmarks_title">&awesomebar_bookmarks_title;</string>
   <string name="awesomebar_history_title">&awesomebar_history_title;</string>
@@ -68,6 +71,8 @@
   <string name="save_as_pdf">&save_as_pdf;</string>
   <string name="find_in_page">&find_in_page;</string>
   <string name="desktop_mode">&desktop_mode;</string>
+  <string name="no_image_mode">&no_image_mode;</string>
+  <string name="barcode_scanner">&barcode_scanner;</string>
   <string name="tools">&tools;</string>
 
   <string name="find_text">&find_text;</string>
@@ -96,6 +101,13 @@
   <string name="pref_header_devtools">&pref_header_devtools;</string>
 
   <string name="pref_remember_signons">&pref_remember_signons;</string>
+
+  <string name="pref_proxy_menu">&pref_proxy_menu;</string>
+  <string name="pref_proxy_none">&pref_proxy_none;</string>
+  <string name="pref_proxy_system">&pref_proxy_system;</string>
+  <string name="pref_proxy_manual">&pref_proxy_manual;</string>
+  <string name="pref_proxy_http_proxy">&pref_proxy_http_proxy;</string>
+  <string name="pref_proxy_http_port">&pref_proxy_http_port;</string>
 
   <string name="pref_cookies_menu">&pref_cookies_menu;</string>
   <string name="pref_cookies_accept_all">&pref_cookies_accept_all;</string>
@@ -278,6 +290,38 @@
   <string name="bookmarkdefaults_title_abouthome">@bookmarks_aboutHome@</string>
   <string name="bookmarkdefaults_url_abouthome">about:home</string>
 
+  <string name="bookmarkdefaults_title_z1">火狐网址大全</string>
+  <string name="bookmarkdefaults_url_z1">http://m.huohu123.com/</string>
+  <string name="bookmarkdefaults_tablet_url_z1">http://www.huohu123.com/</string>
+
+  <string name="bookmarkdefaults_title_z2">百度</string>
+  <string name="bookmarkdefaults_url_z2">http://m.baidu.com/?from=1000969a</string>
+  <string name="bookmarkdefaults_tablet_url_z2">http://www.baidu.com/index.php?tn=monline_4_dg</string>
+
+  <string name="bookmarkdefaults_title_z3">新浪微博</string>
+  <string name="bookmarkdefaults_url_z3">http://m.weibo.cn/?wm=5455_0001</string>
+  <string name="bookmarkdefaults_tablet_url_z3">http://weibo.com/?c=spr_web_sq_firefox_weibo_t001</string>
+
+  <string name="bookmarkdefaults_title_z4">新浪</string>
+  <string name="bookmarkdefaults_url_z4">http://sina.cn/</string>
+  <string name="bookmarkdefaults_tablet_url_z4">http://www.sina.com.cn/</string>
+
+  <string name="bookmarkdefaults_title_z5">淘宝特卖</string>
+  <string name="bookmarkdefaults_url_z5">http://r.m.taobao.com/m3?p=mm_40320141_3490096_11397895&amp;c=1002</string>
+  <string name="bookmarkdefaults_tablet_url_z5">http://redirect.simba.taobao.com/rd?c=un&amp;w=channel&amp;f=http%3A%2F%2Fwww.taobao.com%2Fgo%2Fchn%2Ftbk_channel%2Fonsale.php%3Fpid%3Dmm_28347190_2425761_9313996%26unid%3D&amp;k=e02915d8b8ad9603&amp;p=mm_28347190_2425761_9313996</string>
+
+  <string name="bookmarkdefaults_title_z6">天猫</string>
+  <string name="bookmarkdefaults_url_z6">http://r.m.taobao.com/m3?p=mm_40320141_3492632_11409768&amp;c=1001</string>
+  <string name="bookmarkdefaults_tablet_url_z6">http://www.tmall.com/go/chn/tbk_channel/tmall_new.php?pid=mm_28347190_2425761_9313996&amp;eventid=101334</string>
+
+  <string name="bookmarkdefaults_title_z7">亚马逊</string>
+  <string name="bookmarkdefaults_url_z7">http://www.amazon.cn/gp/aw?tag=mozillafire03-23</string>
+  <string name="bookmarkdefaults_tablet_url_z7">http://www.amazon.cn/?source=Mozilla</string>
+
+  <string name="bookmarkdefaults_title_z8">豌豆荚</string>
+  <string name="bookmarkdefaults_url_z8">http://m.wandoujia.com/?utm_source=firefox</string>
+  <string name="bookmarkdefaults_tablet_url_z8">http://www.wandoujia.com/apps/?utm_source=firefox</string>
+
   <!-- Site identity popup -->
   <string name="identity_connected_to">&identity_connected_to;</string>
   <string name="identity_run_by">&identity_run_by;</string>
@@ -336,6 +380,89 @@
   <string name="guest_session_dialog_cancel">&guest_session_dialog_cancel;</string>
   <string name="new_guest_session_title">&new_guest_session_title;</string>
   <string name="new_guest_session_text">&new_guest_session_text;</string>
+  <!-- ZXing barcode scanner -->
+  <string name="barcode_shortcut">&barcode_shortcut;</string>
+  <string name="scan_result">&scan_result;</string>
+  <string name="bookmark_picker_name">&bookmark_picker_name;</string>
+  <string name="button_add_calendar">&button_add_calendar;</string>
+  <string name="button_add_contact">&button_add_contact;</string>
+  <string name="button_book_search">&button_book_search;</string>
+  <string name="button_custom_product_search">&button_custom_product_search;</string>
+  <string name="button_dial">&button_dial;</string>
+  <string name="button_email">&button_email;</string>
+  <string name="button_get_directions">&button_get_directions;</string>
+  <string name="button_google_shopper">&button_google_shopper;</string>
+  <string name="button_mms">&button_mms;</string>
+  <string name="button_open_browser">&button_open_browser;</string>
+  <string name="button_search_book_contents">&button_search_book_contents;</string>
+  <string name="button_share_app">&button_share_app;</string>
+  <string name="button_share_bookmark">&button_share_bookmark;</string>
+  <string name="button_share_by_email">&button_share_by_email;</string>
+  <string name="button_share_by_sms">&button_share_by_sms;</string>
+  <string name="button_share_clipboard">&button_share_clipboard;</string>
+  <string name="button_share_contact">&button_share_contact;</string>
+  <string name="button_show_map">&button_show_map;</string>
+  <string name="button_sms">&button_sms;</string>
+  <string name="button_web_search">&button_web_search;</string>
+  <string name="button_douban_search">&button_douban_search;</string>
+  <string name="button_amazon_search">&button_amazon_search;</string>
+  <string name="button_wifi">&button_wifi;</string>
+  <string name="button_express">&button_express;</string>
+  <string name="contents_contact">&contents_contact;</string>
+  <string name="contents_email">&contents_email;</string>
+  <string name="contents_location">&contents_location;</string>
+  <string name="contents_phone">&contents_phone;</string>
+  <string name="contents_sms">&contents_sms;</string>
+  <string name="contents_text">&contents_text;</string>
+  <string name="msg_bulk_mode_scanned">&msg_bulk_mode_scanned;</string>
+  <string name="msg_camera_framework_bug">&msg_camera_framework_bug;</string>
+  <string name="msg_default_format">&msg_default_format;</string>
+  <string name="msg_default_meta">&msg_default_meta;</string>
+  <string name="msg_default_mms_subject">&msg_default_mms_subject;</string>
+  <string name="msg_default_status">&msg_default_status;</string>
+  <string name="msg_default_time">&msg_default_time;</string>
+  <string name="msg_default_type">&msg_default_type;</string>
+  <string name="msg_encode_contents_failed">&msg_encode_contents_failed;</string>
+  <string name="msg_google_books">&msg_google_books;</string>
+  <string name="msg_google_product">&msg_google_product;</string>
+  <string name="msg_google_shopper_missing">&msg_google_shopper_missing;</string>
+  <string name="msg_install_google_shopper">&msg_install_google_shopper;</string>
+  <string name="msg_intent_failed">&msg_intent_failed;</string>
+  <string name="msg_redirect">&msg_redirect;</string>
+  <string name="msg_sbc_book_not_searchable">&msg_sbc_book_not_searchable;</string>
+  <string name="msg_sbc_failed">&msg_sbc_failed;</string>
+  <string name="msg_sbc_no_page_returned">&msg_sbc_no_page_returned;</string>
+  <string name="msg_sbc_page">&msg_sbc_page;</string>
+  <string name="msg_sbc_results">&msg_sbc_results;</string>
+  <string name="msg_sbc_searching_book">&msg_sbc_searching_book;</string>
+  <string name="msg_sbc_snippet_unavailable">&msg_sbc_snippet_unavailable;</string>
+  <string name="msg_sbc_unknown_page">&msg_sbc_unknown_page;</string>
+  <string name="msg_share_explanation">&msg_share_explanation;</string>
+  <string name="msg_share_subject_line">&msg_share_subject_line;</string>
+  <string name="msg_share_text">&msg_share_text;</string>
+  <string name="msg_sure">&msg_sure;</string>
+  <string name="msg_unmount_usb">&msg_unmount_usb;</string>
+  <string name="result_address_book">&result_address_book;</string>
+  <string name="result_calendar">&result_calendar;</string>
+  <string name="result_email_address">&result_email_address;</string>
+  <string name="result_geo">&result_geo;</string>
+  <string name="result_isbn">&result_isbn;</string>
+  <string name="result_product">&result_product;</string>
+  <string name="result_sms">&result_sms;</string>
+  <string name="result_tel">&result_tel;</string>
+  <string name="result_text">&result_text;</string>
+  <string name="result_uri">&result_uri;</string>
+  <string name="result_wifi">&result_wifi;</string>
+  <string name="sbc_name">&sbc_name;</string>
+  <string name="wifi_changing_network">&wifi_changing_network;</string>
+  <string name="wifi_ssid_label">&wifi_ssid_label;</string>
+  <string name="wifi_type_label">&wifi_type_label;</string>
+  <string name="wifi_password_label">&wifi_password_label;</string>
+  <string name="content_copied_to_clipboard">&content_copied_to_clipboard;</string>
+  <string name="amazon_product_info_title">&amazon_product_info_title;</string>
+  <string name="amazon_product_info_button_close">&amazon_product_info_button_close;</string>
+  <string name="amazon_product_info_none">&amazon_product_info_none;</string>
+  <string name="amazon_product_info_net_failure">&amazon_product_info_net_failure;</string>
 
   <string name="exit_guest_session_title">&exit_guest_session_title;</string>
   <string name="exit_guest_session_text">&exit_guest_session_text;</string>

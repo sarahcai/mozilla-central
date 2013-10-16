@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko;
 
+import android.content.Context;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.mozglue.GeckoLoader;
@@ -25,6 +26,8 @@ public class GeckoApplication extends Application {
     private boolean mNeedsRestart;
 
     private LightweightTheme mLightweightTheme;
+
+    private static GeckoApplication sInstance = null;
 
     protected void initialize() {
         if (mInited)
@@ -99,7 +102,12 @@ public class GeckoApplication extends Application {
         HardwareUtils.init(getApplicationContext());
         Clipboard.init(getApplicationContext());
         GeckoLoader.loadMozGlue();
+        sInstance = this;
         super.onCreate();
+    }
+
+    public static Context getContext() {
+        return sInstance.getApplicationContext();
     }
 
     public boolean isApplicationInBackground() {

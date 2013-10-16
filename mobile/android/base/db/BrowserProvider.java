@@ -6,8 +6,26 @@
 package org.mozilla.gecko.db;
 
 import org.mozilla.gecko.AppConstants;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.Class;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 import org.mozilla.gecko.Distribution;
 import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.db.BrowserContract.Combined;
@@ -37,6 +55,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.OperationApplicationException;
 import android.content.UriMatcher;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.MatrixCursor;
@@ -1050,6 +1069,8 @@ public class BrowserProvider extends ContentProvider {
             // Create distribution bookmarks before our own default bookmarks
             int pos = createDistributionBookmarks(db);
             createDefaultBookmarks(db, pos);
+
+            createDefaultPinnedBookmarks(db);
         }
 
         private String getLocalizedProperty(JSONObject bookmark, String property, Locale locale) throws JSONException {
@@ -1163,10 +1184,21 @@ public class BrowserProvider extends ContentProvider {
                     String title = mContext.getString(titleid);
 
                     Field urlField = stringsClass.getField(name.replace("_title_", "_url_"));
+                    Field tabletUrlField;
+                    try {
+                    	tabletUrlField = stringsClass.getField(name.replace("_title_", "_tablet_url_"));
+                    } catch (java.lang.NoSuchFieldException ex) {
+                    	tabletUrlField = urlField;
+                    }
                     int urlId = urlField.getInt(null);
+                    int tabletUrlId = tabletUrlField.getInt(null);
                     final String url = mContext.getString(urlId);
-                    createBookmark(db, title, url, pos, mobileFolderId);
-
+                    final String tabletUrl = mContext.getString(tabletUrlId);
+                    if (GeckoAppShell.isTablet()) {
+                        createBookmark(db, title, tabletUrl, pos, mobileFolderId);
+                    } else {
+                        createBookmark(db, title, url, pos, mobileFolderId);
+                    }
                     // create icons in a separate thread to avoid blocking about:home on startup
                     ThreadUtils.postToBackgroundThread(new Runnable() {
                         @Override
@@ -1177,7 +1209,11 @@ public class BrowserProvider extends ContentProvider {
                                 icon = getDefaultFaviconFromDrawable(name);
                             }
                             if (icon != null) {
-                                createFavicon(db, url, icon);
+                                if (GeckoAppShell.isTablet()) {
+                                    createFavicon(db, tabletUrl, icon);
+                                } else {
+                                    createFavicon(db, url, icon);
+                                }
                             }
                         }
                     });
@@ -1243,6 +1279,62 @@ public class BrowserProvider extends ContentProvider {
                 // If the field does not exist, that means we intend to load via a drawable
             }
             return null;
+        }
+
+        private void createDefaultPinnedBookmarks(SQLiteDatabase db) {
+            // Get the default pinned bookmark list from the asset file.
+            JSONArray pinnedList = null;
+            try {
+                AssetManager am = getContext().getAssets();
+                InputStream stream;
+                if (GeckoAppShell.isTablet()) {
+                	stream = am.open("tablet-default-pinned-sites.json");
+                } else {
+                	stream = am.open("default-pinned-sites.json");
+                }
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(stream));
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    sb.append('\n');
+                }
+                stream.close();
+                pinnedList = new JSONArray(sb.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (pinnedList == null) {
+                return;
+            }
+
+            ContentValues bookmarksValues = new ContentValues();
+            bookmarksValues.put(Bookmarks.PARENT, guidToID(db, Bookmarks.PINNED_FOLDER_GUID));
+            long now = System.currentTimeMillis();
+            bookmarksValues.put(Bookmarks.DATE_CREATED, now);
+            bookmarksValues.put(Bookmarks.DATE_MODIFIED, now);
+
+            int pos = 0;
+            int length = pinnedList.length();
+            for (int i = 0; i < length; i++) {
+                try {
+                    JSONObject item = pinnedList.getJSONObject(i);
+                    String title = item.getString("title");
+                    String url = item.getString("url");
+
+                    bookmarksValues.put(Bookmarks.TITLE, title);
+                    bookmarksValues.put(Bookmarks.URL, url);
+                    bookmarksValues.put(Bookmarks.GUID, Utils.generateGuid());
+                    bookmarksValues.put(Bookmarks.POSITION, pos);
+                    db.insertOrThrow(TABLE_BOOKMARKS, Bookmarks.TITLE, bookmarksValues);
+                    pos++;
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         private Bitmap getDefaultFaviconFromDrawable(String name) {
@@ -1946,6 +2038,26 @@ public class BrowserProvider extends ContentProvider {
                 return null;
 
             return c.getInt(c.getColumnIndex(Bookmarks._ID));
+        } finally {
+            if (c != null)
+                c.close();
+        }
+    }
+
+    private Long guidToID(SQLiteDatabase db, String guid) {
+        Cursor c = null;
+
+        try {
+            c = db.query(TABLE_BOOKMARKS,
+                         new String[] { Bookmarks._ID },
+                         Bookmarks.GUID + " = ?",
+                         new String[] { guid },
+                         null, null, null);
+
+            if (c == null || !c.moveToFirst())
+                return null;
+
+            return c.getLong(c.getColumnIndex(Bookmarks._ID));
         } finally {
             if (c != null)
                 c.close();
